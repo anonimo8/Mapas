@@ -1,5 +1,7 @@
 // El HTML de administracion se inserta durante el empaquetado en admin-page.js.
 import { ADMIN_HTML } from './admin-page.js';
+import { EXPORT_PDF_JS } from './export-pdf.js';
+import { normalizePrivatePoint, validatePrivateAssignment, pointInPolygon, isUUID } from './private-points.js';
 const send=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}});
 const fail=(message,status=400)=>send({error:message},status);
 const isCoord=(lat,lng)=>Number.isFinite(lat)&&Number.isFinite(lng)&&lat>=-18.5&&lat<=0&&lng>=-82.5&&lng<=-68;
@@ -28,7 +30,7 @@ const adminHeaders={
   'x-content-type-options':'nosniff',
   'x-frame-options':'DENY',
   'referrer-policy':'strict-origin-when-cross-origin',
-  'content-security-policy':"default-src 'none'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' https://*.tile.openstreetmap.org https://unpkg.com data: blob:; connect-src 'self' https://*.tile.openstreetmap.org; font-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+  'content-security-policy':"default-src 'none'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://unpkg.com data: blob:; connect-src 'self' https://tile.openstreetmap.org https://*.tile.openstreetmap.org; font-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
 };
 export default {
   async fetch(request,env,ctx){
@@ -45,6 +47,44 @@ export default {
     }
     try{
       if(method==='GET'&&(url.pathname==='/'||url.pathname==='/admin')) return new Response(ADMIN_HTML,{headers:adminHeaders});
+      if(method==='GET' && url.pathname==='/private-export.js') return new Response(EXPORT_PDF_JS,{headers:{
+        'content-type':'application/javascript; charset=utf-8','cache-control':'private, no-store',
+        'x-content-type-options':'nosniff','referrer-policy':'no-referrer'
+      }});
+      if(url.pathname==='/api/admin/private/points' && method==='GET'){
+        if(!env.PRIVATE_DB) return fail('Falta conectar PRIVATE_DB al Worker privado.',503);
+        const result=await env.PRIVATE_DB.prepare('SELECT id,territory_id,lat,lng,sex,note,created_at,updated_at FROM private_person_points ORDER BY created_at ASC LIMIT 2000').all();
+        return send({points:result.results||[]});
+      }
+      if(url.pathname==='/api/admin/private/points' && method==='POST'){
+        if(!env.PRIVATE_DB) return fail('Falta conectar PRIVATE_DB.',503);
+        let point;
+        try{point=normalizePrivatePoint(await request.json());await validatePrivateAssignment(env,point);}
+        catch(e){return fail(e.message, e.message.includes('seis puntos')?409:400);}
+        const id=crypto.randomUUID();
+        await env.PRIVATE_DB.prepare('INSERT INTO private_person_points(id,territory_id,lat,lng,sex,note) VALUES(?,?,?,?,?,?)')
+          .bind(id,point.territoryId,point.lat,point.lng,point.sex,point.note).run();
+        // Deliberadamente NO se emite evento público. Nada confidencial va a PUBLIC_DB.
+        return send({ok:true,id},201);
+      }
+      let priv=url.pathname.match(/^\/api\/admin\/private\/points\/([^/]+)$/);
+      if(priv && isUUID(priv[1]) && method==='PUT'){
+        if(!env.PRIVATE_DB) return fail('Falta conectar PRIVATE_DB.',503);
+        let point;
+        try{point=normalizePrivatePoint(await request.json());await validatePrivateAssignment(env,point,priv[1]);}
+        catch(e){return fail(e.message, e.message.includes('seis puntos')?409:400);}
+        const existing=await env.PRIVATE_DB.prepare('SELECT id FROM private_person_points WHERE id=?').bind(priv[1]).first();
+        if(!existing)return fail('Punto privado no encontrado.',404);
+        await env.PRIVATE_DB.prepare('UPDATE private_person_points SET territory_id=?,lat=?,lng=?,sex=?,note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')
+          .bind(point.territoryId,point.lat,point.lng,point.sex,point.note,priv[1]).run();
+        return send({ok:true});
+      }
+      if(priv && isUUID(priv[1]) && method==='DELETE'){
+        if(!env.PRIVATE_DB) return fail('Falta conectar PRIVATE_DB.',503);
+        await env.PRIVATE_DB.prepare('DELETE FROM private_person_points WHERE id=?').bind(priv[1]).run();
+        return send({ok:true});
+      }
+
       if(url.pathname==='/api/admin/all'&&method==='GET'){
         const [t,p]=await Promise.all([
           env.PUBLIC_DB.prepare('SELECT id,locality,number,geometry,published,updated_at FROM territories ORDER BY locality,number LIMIT 2000').all(),
@@ -64,6 +104,13 @@ export default {
         const x=normalizeTerritory(await request.json());
         const before=await env.PUBLIC_DB.prepare('SELECT published FROM territories WHERE id=?').bind(m[1]).first();
         if(!before) return fail('Territorio no encontrado.',404);
+        // La edición del contorno no debe dejar puntos privados vinculados fuera.
+        if(env.PRIVATE_DB){
+          const linked=await env.PRIVATE_DB.prepare('SELECT lat,lng FROM private_person_points WHERE territory_id=?').bind(m[1]).all();
+          const newGeometry=JSON.parse(x.geometry);
+          if((linked.results||[]).some(p=>!pointInPolygon(p.lng,p.lat,newGeometry)))
+            return fail('El nuevo contorno deja puntos privados fuera. Reasigna esos puntos antes de guardar la nueva división.',409);
+        }
         await env.PUBLIC_DB.prepare('UPDATE territories SET locality=?,number=?,geometry=?,published=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')
           .bind(x.locality,x.number,x.geometry,x.published,m[1]).run();
         if(x.published||before.published) await broadcast(env);
@@ -72,6 +119,9 @@ export default {
       if(m&&UUID.test(m[1])&&method==='DELETE'){
         const before=await env.PUBLIC_DB.prepare('SELECT published FROM territories WHERE id=?').bind(m[1]).first();
         if(!before) return fail('Territorio no encontrado.',404);
+        // La asociación confidencial es SOLO administrativa y no se copia a PUBLIC_DB.
+        // Se conservan las ubicaciones privadas, pero quedan sin territorio al borrar su polígono.
+        if(env.PRIVATE_DB) await env.PRIVATE_DB.prepare('UPDATE private_person_points SET territory_id=NULL,updated_at=CURRENT_TIMESTAMP WHERE territory_id=?').bind(m[1]).run();
         await env.PUBLIC_DB.prepare('DELETE FROM territories WHERE id=?').bind(m[1]).run();
         if(before.published) await broadcast(env);
         return send({ok:true});

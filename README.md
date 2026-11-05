@@ -1,54 +1,47 @@
-# Territorios Lambayeque · GitHub → Cloudflare
+# Territorios Lambayeque — V2 (GitHub → Cloudflare)
 
-**Proyecto listo para subir a un repositorio privado de GitHub.** Un mismo repositorio despliega **DOS Cloudflare Workers** independientes: el mapa público desde la raíz (`/`) y el panel de edición desde `admin-worker/`.
+Actualización del mapa de territorios que ya funciona en GitHub/Cloudflare.
 
-**Empieza aquí:** [GUIA_GITHUB_CLOUDFLARE.md](GUIA_GITHUB_CLOUDFLARE.md). Sigue los pasos en orden; **es obligatorio crear la base de datos D1 y sustituir el UUID en los dos archivos Wrangler antes de desplegar**.
+**INSTRUCCIONES DE ACTUALIZACIÓN:** abre [INSTALAR_ACTUALIZACION_V2.md](INSTALAR_ACTUALIZACION_V2.md). Si aún no has configurado los dos Workers, también puedes leer [GUIA_GITHUB_CLOUDFLARE.md](GUIA_GITHUB_CLOUDFLARE.md).
 
-## Qué incluye
+## Funciones
 
-- Mapa real con calles y edificios visibles mediante Leaflet + OpenStreetMap.
-- Navegación inicial: Lambayeque, Mochumí, Túcume, Íllimo, Pacora y Mórrope. Se puede navegar fuera de estas localidades.
-- Polígonos de territorios con números, visibilidad controlada y edición por el administrador.
-- Puntos de referencia que solo se publican al ser aprobados.
-- Realtime WebSocket por Durable Objects; actualización periódica de respaldo.
-- Cloudflare Access obligatorio para la administración (segundo Worker con autorización por identidad comprobada en servidor).
-- Base D1 **solo para información geográfica publicable**, sin nombres, sexo, registros ni ubicaciones privadas de personas sordas.
-- Formulario público antispam deshabilitado hasta configurar Turnstile (opcional para probar el mapa).
+- Mapa público Leaflet + OpenStreetMap, con mapa general, puntos geográficos públicos aprobados y polígonos que el administrador decide publicar.
+- **Administración privada:** dos conjuntos de datos separados. Los contornos e información geográfica publicable están en `PUBLIC_DB`; los puntos confidenciales H/M están exclusivamente en `PRIVATE_DB`.
+- Puntos permanentes: añadir haciendo clic, arrastrar para recolocar, editar sexo, nota opcional y territorio, borrar, persistir en la base D1 privada.
+- Límite de seis personas por territorio, validación de puntos dentro de su contorno.
+- Dibujar polígonos o rectángulos, editar vértices, crear áreas más pequeñas manualmente y numerarlas.
+- **Descarga de PDF confidencial** con mapa visible, polígono, H/M, totales y encabezado por territorio. Generado directamente en el navegador, sin enviar los datos a un conversor externo.
+- Actualizaciones en vivo para información geográfica pública aprobada; **los datos privados no se transmiten por ese canal**.
 
-## Organización en GitHub
+## Archivos principales
 
 ```text
-Repositorio GitHub (private)
-├── README.md                   ← Lee este archivo
-├── GUIA_GITHUB_CLOUDFLARE.md ← Sigue este tutorial
-├── wrangler.jsonc              ← Configuración Worker PÚBLICO
-├── package.json
-├── public/                     ← Página del mapa
-│   ├── index.html
-│   ├── app.js
-│   └── style.css
-├── src/index.js                ← API pública, Durable Object y /api/health
-├── database/schema.sql        ← Ejecutar una vez en la consola D1
-├── admin-worker/               ← Worker PRIVADO (otra integración GitHub)
-│   ├── wrangler.jsonc
-│   ├── package.json
-│   ├── admin.html
-│   └── src/
-├── docs/
-└── tests/
+wrangler.jsonc                          Worker público, SOLO PUBLIC_DB
+src/index.js                           API pública
+public/                                Sitio público
+admin-worker/wrangler.jsonc             Worker administrativo, PUBLIC_DB + PRIVATE_DB
+admin-worker/admin.html                 Interfaz administrativa editable
+admin-worker/export-pdf-browser.js      Crea PDF en navegador sin librerías de terceros
+admin-worker/src/private-points.js      Validaciones de datos confidenciales
+admin-worker/src/index.js               API protegida con Cloudflare Access
+admin-worker/src/admin-page.js          HTML generado
+admin-worker/src/export-pdf.js          Exportador generado
+database/schema.sql               Esquema ya existente de PUBLIC_DB
+database/private_schema.sql             NUEVO: ejecutar solo en PRIVATE_DB
+docs/regenerar-admin-html.py             Regenera los dos archivos JS derivados
+INSTALAR_ACTUALIZACION_V2.md            Pasos para actualizar GitHub
 ```
 
-## Comprobación al desplegar
+Para modificar el HTML o el generador PDF, edita sus archivos fuente y ejecuta `python docs/regenerar-admin-html.py` antes del commit para actualizar las cadenas importadas por el Worker.
 
-1. Página del mapa: `https://lambayeque-territorios-publico.TU_SUBDOMINIO.workers.dev/`
-2. Diagnóstico público: `https://lambayeque-territorios-publico.TU_SUBDOMINIO.workers.dev/api/health` → debe aparecer `"ok":true`.
-3. API pública: `/api/data` → empieza con listas vacías de territorios/puntos.
-4. El panel privado solo se podrá abrir una vez protegida la administración con Cloudflare Access y configurada la variable secreta `ADMIN_EMAIL`.
+### Pruebas locales
 
-**Importante:** Sin datos GeoJSON reales no hay territorios predefinidos. El administrador deberá dibujarlos revisando las calles (el PDF de referencia son capturas, no coordenadas confiables). El registro individual confidencial es la **fase 2**, que debe utilizar una base independiente no conectada al Worker público.
+```bash
+npm test
+npm run check
+```
 
-## Estado de las pruebas
+La integración con D1 y Access requiere configuración en Cloudflare; estos comandos **no sustituyen** las pruebas de despliegue real.
 
-Comprobaciones locales de sintaxis, SQL y pruebas automáticas básicas. **No se ha desplegado ni probado en tu cuenta Cloudflare**; el ZIP no incluye credenciales ni el ID de tu D1 porque todavía no lo conocemos.
-
-Fuentes: [Cloudflare Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/), [Git integration](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/), [Cloudflare Access](https://developers.cloudflare.com/workers/configuration/cloudflare-access/).
+**Privacidad:** No introduzcas datos personales en archivos del repositorio, GitHub Issues, ejemplos SQL o mapas públicos. Los contornos no se publican automáticamente.
