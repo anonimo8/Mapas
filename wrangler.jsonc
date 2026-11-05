@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lambayeque-territorios-publico",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-04",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {"binding":"PUBLIC_DB","database_name":"lambayeque_territorios_publicos","database_id":"f3d80d31-772a-43f5-9c38-6562771da4e5"}
+  ],
+  "durable_objects": {
+    "bindings": [{"name":"LIVE","class_name":"TerritoryLive"}]
+  },
+  "migrations": [{"tag":"v1","new_sqlite_classes":["TerritoryLive"]}],
+  "vars": {"TURNSTILE_SITE_KEY":""}
+}

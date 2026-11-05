@@ -1,0 +1,16 @@
+{
+  "name": "territorios-lambayeque-mapa",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker público para mapa colaborativo de territorios en Lambayeque",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node tests/smoke.mjs",
+    "check": "node --check src/index.js && node --check public/app.js && node --check admin-worker/src/index.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

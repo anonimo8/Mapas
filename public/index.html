@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#143c37">
+<meta name="description" content="Mapa colaborativo público de territorios y referencias geográficas de Lambayeque, Perú.">
+<title>Territorios | Lambayeque</title>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon">⌖</span><div><strong>Territorios</strong><small>Mapa colaborativo · Lambayeque</small></div></div>
+    <div class="top-actions"><span id="liveStatus" class="live-pill"><i></i> Conectando</span><button class="icon-btn" id="locateBtn" title="Mi ubicación">◎</button><button class="icon-btn mobile-menu" id="mobileMenu" aria-label="Mostrar menú">☰</button></div>
+  </header>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-body">
+      <div class="overline">EXPLORAR EL MAPA</div>
+      <h1>Tu territorio, con claridad.</h1>
+      <p class="muted intro">Consulta calles, zonas geográficas y puntos comunitarios autorizados.</p>
+      <label for="locality">Localidad</label>
+      <select id="locality"><option value="all">Todas las localidades</option><option value="Lambayeque">Lambayeque</option><option value="Mochumí">Mochumí</option><option value="Túcume">Túcume</option><option value="Íllimo">Íllimo</option><option value="Pacora">Pacora</option><option value="Mórrope">Mórrope</option></select>
+      <label for="search">Buscar una dirección</label>
+      <div class="searchbar"><input id="search" placeholder="Calle, dirección o lugar en Perú" autocomplete="off"><button id="searchBtn" title="Buscar">⌕</button></div>
+      <div id="searchResults" class="search-results" hidden></div>
+      <div class="sec-header"><h2>Territorios visibles</h2><span class="counter" id="countTerritories">0</span></div>
+      <div class="territory-list" id="territoryList"><p class="empty">Aún no se han publicado territorios.</p></div>
+      <div class="sec-header second"><h2>Puntos de referencia</h2><span class="counter" id="countPoints">0</span></div>
+      <select id="categoryFilter" aria-label="Filtrar puntos"><option value="all">Todas las categorías</option><option value="referencia">Referencias</option><option value="acceso">Accesos</option><option value="servicio">Servicios</option><option value="otro">Otros</option></select>
+      <div class="points-list" id="pointsList"><p class="empty">No hay puntos aprobados todavía.</p></div>
+      <div class="privacy-note"><span>▣</span><div><b>Información pública únicamente</b><p>No se publican datos personales, registros privados ni información sobre personas sordas.</p></div></div>
+    </div>
+    <footer class="side-footer">Cartografía © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> · Datos comunitarios revisados</footer>
+  </aside>
+  <main id="mapArea"><div id="map" role="application" aria-label="Mapa interactivo de Lambayeque y alrededores"></div>
+    <div class="map-hint" id="mapHint">Desplázate y acerca el mapa para explorar las calles</div>
+    <button id="addPointBtn" class="primary-btn floating-add">＋ Sugerir punto</button>
+  </main>
+</div>
+<div class="modal" id="pointModal" hidden><div class="modal-shade" id="closeShade"></div><section class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-top"><h2 id="modalTitle">Sugerir punto geográfico</h2><button id="closeModal" class="icon-btn" aria-label="Cerrar">×</button></div>
+  <p class="muted">Selecciona una ubicación exacta en el mapa. <strong>No introduzcas nombres, domicilios particulares ni información de personas.</strong> Los puntos serán revisados antes de publicarse.</p>
+  <form id="proposalForm">
+    <div class="coord-box" id="coordBox">Selecciona un lugar haciendo clic en el mapa</div>
+    <label for="pointTitle">Nombre del lugar</label><input id="pointTitle" required minlength="3" maxlength="90" placeholder="Ej. Parque o acceso público">
+    <label for="pointCategory">Categoría</label><select id="pointCategory"><option value="referencia">Referencia</option><option value="acceso">Acceso</option><option value="servicio">Servicio</option><option value="otro">Otro</option></select>
+    <label for="pointDescription">Descripción opcional</label><textarea id="pointDescription" maxlength="300" rows="2" placeholder="Solo información geográfica de uso público"></textarea>
+    <div id="turnstileMount" class="turnstile-mount"></div>
+    <p class="small muted" id="contributionHelp"></p>
+    <div class="modal-actions"><button type="button" id="cancelModal" class="secondary-btn">Cancelar</button><button type="submit" class="primary-btn" id="submitPoint">Enviar para revisión</button></div>
+    <p id="proposalStatus" class="form-status" aria-live="polite"></p>
+  </form>
+</section></div>
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="/app.js"></script>
+</body></html>

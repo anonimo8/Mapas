@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lambayeque-territorios-administracion",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-04",
+  "d1_databases": [
+    {"binding":"PUBLIC_DB","database_name":"lambayeque_territorios_publicos","database_id":"REEMPLAZAR_UUID_D1"}
+  ],
+  "durable_objects": {
+    "bindings": [{"name":"LIVE","class_name":"TerritoryLive","script_name":"lambayeque-territorios-publico"}]
+  }
+}
