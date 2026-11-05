@@ -1,14 +1,14 @@
 {
   "name": "territorios-lambayeque-mapa",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "Worker público para mapa colaborativo de territorios en Lambayeque",
+  "description": "Un solo Worker público con editor protegido, persistencia D1 y exportación PDF",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node tests/smoke.mjs && node tests/private-features.mjs && node tests/pdf-export-test.mjs && node tests/check-admin-ui.mjs",
-    "check": "node --check src/index.js && node --check public/app.js && node --check admin-worker/src/index.js && node --check admin-worker/src/private-points.js && node --check admin-worker/src/export-pdf.js"
+    "test": "node tests/smoke.mjs && node tests/auth-session.mjs && node tests/private-features.mjs && node tests/pdf-export-test.mjs && node tests/check-admin-ui.mjs",
+    "check": "node --check src/index.js && node --check src/auth.js && node --check public/app.js && node --check src/admin/index.js && node --check src/admin/private-points.js && node --check src/admin/export-pdf.js"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

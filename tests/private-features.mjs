@@ -1,6 +1,6 @@
 import {strict as assert} from 'node:assert';
-import {normalizePrivatePoint,pointInPolygon} from '../admin-worker/src/private-points.js';
-import admin from '../admin-worker/src/index.js';
+import {normalizePrivatePoint,pointInPolygon} from '../src/admin/private-points.js';
+import admin from '../src/admin/index.js';
 const polygon={type:'Polygon',coordinates:[[[-79.909,-6.700],[-79.907,-6.700],[-79.907,-6.702],[-79.909,-6.702],[-79.909,-6.700]]]};
 const tid='11111111-1111-4111-8111-111111111111';
 assert.equal(pointInPolygon(-79.908,-6.701,polygon),true);
@@ -21,25 +21,23 @@ function privatePrepare(sql){return {bind(...args){return {
     if(sql.startsWith('DELETE'))saved.delete(args[0]);return {success:true};},
    all:async()=>({results:[...saved.values()]})
   };},all:async()=>({results:[...saved.values()]})};}
-const env={PUBLIC_DB:{prepare:publicPrepare},PRIVATE_DB:{prepare:privatePrepare},LIVE:{getByName(){return {fetch:async()=>new Response('{}')}}},ADMIN_EMAIL:'owner@example.com'};
-const owner={access:{getIdentity:async()=>({email:'owner@example.com'})}};
-const req=(path,method='GET',payload)=>new Request('https://admin.example'+path,{method,headers:method!=='GET'?{'origin':'https://admin.example',...(payload?{'content-type':'application/json'}:{})}:undefined,body:payload?JSON.stringify(payload):undefined});
-let r=await admin.fetch(req('/api/admin/private/points'),env,{});assert.equal(r.status,403);
-r=await admin.fetch(req('/api/admin/private/points'),env,owner);assert.equal(r.status,200);
+const env={PUBLIC_DB:{prepare:publicPrepare},PRIVATE_DB:{prepare:privatePrepare},LIVE:{getByName(){return {fetch:async()=>new Response('{}')}}}};
+const req=(path,method='GET',payload)=>new Request('https://mapas.example'+path,{method,headers:method!=='GET'?{'origin':'https://mapas.example',...(payload?{'content-type':'application/json'}:{})}:undefined,body:payload?JSON.stringify(payload):undefined});
+let r=await admin.fetch(req('/api/admin/private/points'),env,{});assert.equal(r.status,200);
 const payload={sex:'hombre',lat:-6.701,lng:-79.908,territory_id:tid,note:'referencia 01'};
 for(let i=0;i<6;i++){
-  r=await admin.fetch(req('/api/admin/private/points','POST',payload),env,owner);
+  r=await admin.fetch(req('/api/admin/private/points','POST',payload),env,{});
   assert.equal(r.status,201);
 }
-r=await admin.fetch(req('/api/admin/private/points','POST',payload),env,owner);
+r=await admin.fetch(req('/api/admin/private/points','POST',payload),env,{});
 assert.equal(r.status,409);assert.match((await r.json()).error,/seis/);
-r=await admin.fetch(req('/api/admin/private/points','POST',{...payload,lat:-6.71}),env,owner);
+r=await admin.fetch(req('/api/admin/private/points','POST',{...payload,lat:-6.71}),env,{});
 assert.equal(r.status,400);
-r=await admin.fetch(req('/api/admin/private/points'),env,owner);
+r=await admin.fetch(req('/api/admin/private/points'),env,{});
 assert.equal((await r.json()).points.length,6);
 const first=[...saved.keys()][0];
-r=await admin.fetch(req('/api/admin/private/points/'+first,'PUT',{...payload,sex:'mujer'}),env,owner);
+r=await admin.fetch(req('/api/admin/private/points/'+first,'PUT',{...payload,sex:'mujer'}),env,{});
 assert.equal(r.status,200);assert.equal(saved.get(first).sex,'mujer');
-r=await admin.fetch(req('/api/admin/private/points/'+first,'DELETE'),env,owner);
+r=await admin.fetch(req('/api/admin/private/points/'+first,'DELETE'),env,{});
 assert.equal(r.status,200);assert.equal(saved.size,5);
-console.log('PASS: D1 privada, autenticación, creación/edición/eliminación, contorno, límite de 6.');
+console.log('PASS: D1 privada, altas y cambios, límites de seis, borrado y geometría.');

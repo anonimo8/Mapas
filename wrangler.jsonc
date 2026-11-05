@@ -6,10 +6,11 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/editar", "/admin", "/acceso", "/private-export.js"]
   },
   "d1_databases": [
-    {"binding":"PUBLIC_DB","database_name":"lambayeque_territorios_publicos","database_id":"f3d80d31-772a-43f5-9c38-6562771da4e5"}
+    {"binding":"PUBLIC_DB","database_name":"lambayeque_territorios_publicos","database_id":"f3d80d31-772a-43f5-9c38-6562771da4e5"},
+    {"binding":"PRIVATE_DB","database_name":"lambayeque_territorios_privados","database_id":"483d14cf-7f45-4427-9269-72507fa6ee5b"}
   ],
   "durable_objects": {
     "bindings": [{"name":"LIVE","class_name":"TerritoryLive"}]

@@ -1,3 +1,5 @@
+import adminHandler from './admin/index.js';
+import {handleAuthRoute,hasAdminSession} from './auth.js';
 import { DurableObject } from 'cloudflare:workers';
 
 const json = (data, status=200, headers={}) => new Response(JSON.stringify(data), {
@@ -8,10 +10,22 @@ const isCoord = (lat,lng) => Number.isFinite(lat) && Number.isFinite(lng) && lat
 const CATEGORIES = new Set(['referencia','acceso','servicio','otro']);
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const method = request.method;
     try {
+      // Un solo Worker en Cloudflare. El mapa permanece abierto a todos,
+      // mientras la edición y las coordenadas H/M requieren sesión aquí mismo.
+      const authResponse = await handleAuthRoute(request, env);
+      if(authResponse) return authResponse;
+      if(url.pathname === '/editar' || url.pathname === '/admin' || url.pathname === '/private-export.js' || url.pathname.startsWith('/api/admin/')) {
+        if(!await hasAdminSession(request,env)) {
+          if(method === 'GET' && (url.pathname === '/editar' || url.pathname === '/admin'))
+            return Response.redirect(url.origin+'/acceso',302);
+          return error('Necesitas iniciar sesión para editar.',401);
+        }
+        return adminHandler.fetch(request,env,ctx);
+      }
       if (url.pathname === '/api/health' && method === 'GET') {
         if (!env.PUBLIC_DB) return json({ok:false, database:'Falta el binding PUBLIC_DB'},503);
         try {

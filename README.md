@@ -1,47 +1,49 @@
-# Territorios Lambayeque — V2 (GitHub → Cloudflare)
+# Territorios Lambayeque · V3 — una sola aplicación
 
-Actualización del mapa de territorios que ya funciona en GitHub/Cloudflare.
+**Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa se consulta sin iniciar sesión. En el mismo sitio, el botón **Editar mapa** abre un editor protegido por contraseña.
 
-**INSTRUCCIONES DE ACTUALIZACIÓN:** abre [INSTALAR_ACTUALIZACION_V2.md](INSTALAR_ACTUALIZACION_V2.md). Si aún no has configurado los dos Workers, también puedes leer [GUIA_GITHUB_CLOUDFLARE.md](GUIA_GITHUB_CLOUDFLARE.md).
+## Qué puedes hacer
 
-## Funciones
+- Consultar mapas de Lambayeque, Mochumí, Túcume, Íllimo, Pacora y Mórrope con zoom a nivel de calle.
+- Dibujar territorios con polígonos y rectángulos; ajustar vértices, numerar, guardar y editar.
+- Añadir, cambiar de posición y borrar marcadores permanentes de **hombre/mujer** exclusivamente dentro del editor protegido.
+- Asignar como máximo seis puntos privados por territorio (también pueden existir puntos sin asignar).
+- Encuadrar el mapa y descargar una ficha PDF con mapa y resumen privado para cada territorio.
+- Publicar contornos geográficos revisados y referencias que **no revelen** información confidencial. Los datos H/M nunca se envían por las APIs públicas.
+- Ver en vivo los cambios autorizados usando WebSockets.
 
-- Mapa público Leaflet + OpenStreetMap, con mapa general, puntos geográficos públicos aprobados y polígonos que el administrador decide publicar.
-- **Administración privada:** dos conjuntos de datos separados. Los contornos e información geográfica publicable están en `PUBLIC_DB`; los puntos confidenciales H/M están exclusivamente en `PRIVATE_DB`.
-- Puntos permanentes: añadir haciendo clic, arrastrar para recolocar, editar sexo, nota opcional y territorio, borrar, persistir en la base D1 privada.
-- Límite de seis personas por territorio, validación de puntos dentro de su contorno.
-- Dibujar polígonos o rectángulos, editar vértices, crear áreas más pequeñas manualmente y numerarlas.
-- **Descarga de PDF confidencial** con mapa visible, polígono, H/M, totales y encabezado por territorio. Generado directamente en el navegador, sin enviar los datos a un conversor externo.
-- Actualizaciones en vivo para información geográfica pública aprobada; **los datos privados no se transmiten por ese canal**.
+**La opción pública de «Sugerir punto» ya no aparece**, por lo que Turnstile no hace falta para el flujo de trabajo del usuario. El código previo de aportes públicos sigue presente, pero sin botón público.
+
+## Antes de subir a GitHub
+
+Lee [INSTALACION_UNICA.md](INSTALACION_UNICA.md) para configurar **dos bases de datos D1 dentro del mismo Worker**, los dos ID reales de base de datos en `wrangler.jsonc`, y los dos secretos `ADMIN_PASSWORD` y `ADMIN_SESSION_SECRET` del Worker `mapas`.
+
+No subas contraseñas, secretos, ubicaciones privadas ni ficheros `.dev.vars` a GitHub.
+
+## Instalación
+
+1. Cloudflare → D1: mantén `lambayeque_territorios_publicos` y crea `lambayeque_territorios_privados`.
+2. Ejecuta `database/private_schema.sql` en **la base privada**. `database/schema.sql` se ejecuta en la base pública solo si aún faltan tablas; no borres los datos existentes.
+3. En GitHub → `wrangler.jsonc`, reemplaza ambos `REEMPLAZAR_UUID_...` por los ID verdaderos de Cloudflare. Deja `"name":"mapas"`.
+4. Cloudflare → Workers & Pages → `mapas` → Settings → Variables and Secrets: crea dos variables **Secret**: `ADMIN_PASSWORD` (mínimo 12 caracteres, usa una contraseña larga) y `ADMIN_SESSION_SECRET` (mínimo 32 caracteres aleatorios, distinto de la contraseña).
+5. Actualiza/commitea los archivos descomprimidos de este proyecto en el repositorio GitHub que ya usa `mapas`. Cloudflare seguirá desplegando ese único Worker.
+6. Abre `https://mapas.territorios.workers.dev/` para consultar el mapa y `https://mapas.territorios.workers.dev/editar` para editar.
+
+La aplicación **no usa Cloudflare Access**: tiene un sistema propio de login, con sesiones firmadas en cookies HttpOnly/Secure/SameSite, control de origen y bloqueo de intentos repetidos por IP. No se garantiza privacidad absoluta: Cloudflare aloja los datos y los administradores de infraestructura/proveedor pueden tener capacidades de acceso. Los PDF descargados se deben custodiar cuidadosamente.
 
 ## Archivos principales
 
-```text
-wrangler.jsonc                          Worker público, SOLO PUBLIC_DB
-src/index.js                           API pública
-public/                                Sitio público
-admin-worker/wrangler.jsonc             Worker administrativo, PUBLIC_DB + PRIVATE_DB
-admin-worker/admin.html                 Interfaz administrativa editable
-admin-worker/export-pdf-browser.js      Crea PDF en navegador sin librerías de terceros
-admin-worker/src/private-points.js      Validaciones de datos confidenciales
-admin-worker/src/index.js               API protegida con Cloudflare Access
-admin-worker/src/admin-page.js          HTML generado
-admin-worker/src/export-pdf.js          Exportador generado
-database/schema.sql               Esquema ya existente de PUBLIC_DB
-database/private_schema.sql             NUEVO: ejecutar solo en PRIVATE_DB
-docs/regenerar-admin-html.py             Regenera los dos archivos JS derivados
-INSTALAR_ACTUALIZACION_V2.md            Pasos para actualizar GitHub
-```
+- `src/index.js`: Worker único y API pública, enrutamiento a editor autenticado.
+- `src/auth.js`: contraseña de administrador y sesiones seguras.
+- `src/admin/`: editor, operaciones públicas controladas, datos privados y PDF.
+- `public/`: mapa que todos pueden consultar.
+- `database/schema.sql`: tablas geográficas públicas.
+- `database/private_schema.sql`: tabla de puntos H/M privados y límite de intentos.
+- `wrangler.jsonc`: configuración de `mapas` (el mismo Worker, dos D1).
+- `tests/`: pruebas de API, permisos, datos y PDF.
 
-Para modificar el HTML o el generador PDF, edita sus archivos fuente y ejecuta `python docs/regenerar-admin-html.py` antes del commit para actualizar las cadenas importadas por el Worker.
+## Comprobaciones
 
-### Pruebas locales
+Con Node.js: `npm install`, `npm run check`, `npm test`. Se verificó localmente el código y la generación PDF; **no se ha desplegado ni probado en tu Cloudflare real**.
 
-```bash
-npm test
-npm run check
-```
-
-La integración con D1 y Access requiere configuración en Cloudflare; estos comandos **no sustituyen** las pruebas de despliegue real.
-
-**Privacidad:** No introduzcas datos personales en archivos del repositorio, GitHub Issues, ejemplos SQL o mapas públicos. Los contornos no se publican automáticamente.
+**Limitación de edición:** se puede redibujar y ajustar manualmente una división. No hay una operación automática que corte un polígono en dos al dibujar una línea. En PDF eliges el encuadre visible del mapa; la exportación depende de que las teselas carguen en el navegador.

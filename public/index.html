@@ -2,7 +2,7 @@
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#143c37">
-<meta name="description" content="Mapa colaborativo público de territorios y referencias geográficas de Lambayeque, Perú.">
+<meta name="description" content="Mapa público de territorios y referencias geográficas de Lambayeque, Perú.">
 <title>Territorios | Lambayeque</title>
 <link rel="preconnect" href="https://unpkg.com">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -10,8 +10,8 @@
 </head><body>
 <div id="app">
   <header class="topbar">
-    <div class="brand"><span class="brand-icon">⌖</span><div><strong>Territorios</strong><small>Mapa colaborativo · Lambayeque</small></div></div>
-    <div class="top-actions"><span id="liveStatus" class="live-pill"><i></i> Conectando</span><button class="icon-btn" id="locateBtn" title="Mi ubicación">◎</button><button class="icon-btn mobile-menu" id="mobileMenu" aria-label="Mostrar menú">☰</button></div>
+    <div class="brand"><span class="brand-icon">⌖</span><div><strong>Territorios</strong><small>Mapa público · Lambayeque</small></div></div>
+    <div class="top-actions"><a class="editor-link" href="/editar" title="Editor de territorios">✎ Editar mapa</a><span id="liveStatus" class="live-pill"><i></i> Conectando</span><button class="icon-btn" id="locateBtn" title="Mi ubicación">◎</button><button class="icon-btn mobile-menu" id="mobileMenu" aria-label="Mostrar menú">☰</button></div>
   </header>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-body">
@@ -34,7 +34,8 @@
   </aside>
   <main id="mapArea"><div id="map" role="application" aria-label="Mapa interactivo de Lambayeque y alrededores"></div>
     <div class="map-hint" id="mapHint">Desplázate y acerca el mapa para explorar las calles</div>
-    <button id="addPointBtn" class="primary-btn floating-add">＋ Sugerir punto</button>
+
+    <button id="addPointBtn" class="primary-btn floating-add" hidden aria-hidden="true" style="display:none">Sugerir punto</button>
   </main>
 </div>
 <div class="modal" id="pointModal" hidden><div class="modal-shade" id="closeShade"></div><section class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">

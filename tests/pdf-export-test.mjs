@@ -1,7 +1,7 @@
 import {strict as assert} from 'node:assert';
 import {readFile,writeFile} from 'node:fs/promises';
 import vm from 'node:vm';
-const source=await readFile(new URL('../admin-worker/export-pdf-browser.js',import.meta.url),'utf8');
+const source=await readFile(new URL('../src/admin/export-pdf-browser.js',import.meta.url),'utf8');
 const jpg=await readFile(new URL('./sample-tile.jpg',import.meta.url));
 const fakeCtx={
  fillRect(){},drawImage(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},arc(){},fillText(){},scale(){},

@@ -12,3 +12,11 @@ CREATE TABLE IF NOT EXISTS private_person_points (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_private_point_territory ON private_person_points(territory_id);
+
+-- Protección contra intentos repetidos de acceso al editor.
+-- k es un hash HMAC de la IP; nunca se almacena la dirección IP en texto claro.
+CREATE TABLE IF NOT EXISTS admin_login_limits (
+  k TEXT PRIMARY KEY,
+  failed INTEGER NOT NULL DEFAULT 0,
+  window_start INTEGER NOT NULL
+);
