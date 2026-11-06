@@ -169,36 +169,12 @@ function moveLatLngTree(points,dx,dy){
   return map.layerPointToLatLng(L.point(pixel.x+dx,pixel.y+dy));
  });
 }
-// Leaflet.Draw mantiene sus controles de edición en un grupo de marcadores
-// separado del SVG del territorio. Tomamos su posición inicial para desplazar
-// TODAS las esquinas, puntos intermedios y centro junto con la figura.
-function snapshotEditingHandles(layer){
- const editor=layer.editing;
- if(!editor?.enabled?.())return [];
- const markers=new Set();
- const add=marker=>{if(marker?.getLatLng&&marker?.setLatLng)markers.add(marker);};
- const groups=[editor._markerGroup,...(editor._verticesHandlers||[]).map(handler=>handler._markerGroup)];
- for(const group of groups)group?.eachLayer?.(add);
- add(editor._moveMarker);
- for(const marker of editor._resizeMarkers||[])add(marker);
- return [...markers].map(marker=>({marker,position:marker.getLatLng()}));
-}
-function moveEditingHandles(handles,dx,dy){
- for(const {marker,position} of handles){
-  const pixel=map.latLngToLayerPoint(position);
-  marker.setLatLng(map.layerPointToLatLng(L.point(pixel.x+dx,pixel.y+dy)));
- }
-}
 function refreshEditingHandles(layer){
  const editor=layer.editing;
  if(!editor?.enabled?.())return;
- // Un polígono de Leaflet.Draw retiene en editor.latlngs referencias a la
- // geometría ANTERIOR. Sólo disable()/enable() deja los cuadros desfasados.
- // Sincronizamos primero la geometría del editor y recreamos sus controles.
- editor.disable();
- if(typeof editor._updateLatLngs==='function')editor._updateLatLngs({layer});
- else if(Array.isArray(editor.latlngs))editor.latlngs=[layer.getLatLngs()];
- editor.enable();
+ // Leaflet.Draw dibuja por separado los tiradores de edición. Tras mover
+ // la figura, se regeneran a partir de su NUEVA geometría.
+ editor.disable();editor.enable();
  refreshTerritoryDragCursors();
 }
 function startTerritoryDrag(layer,event){
@@ -207,7 +183,6 @@ function startTerritoryDrag(layer,event){
  const pointerId=event.pointerId;
  const originX=event.clientX,originY=event.clientY;
  const startingPoints=layer.getLatLngs();
- const handles=snapshotEditingHandles(layer);
  const wasMapDraggable=map.dragging.enabled();
  let moved=false,finished=false;
  event.preventDefault();event.stopPropagation();
@@ -219,9 +194,11 @@ function startTerritoryDrag(layer,event){
   if(!moved&&Math.hypot(dx,dy)<3)return;
   moved=true;
   layer.setLatLngs(moveLatLngTree(startingPoints,dx,dy));
-  // Cada control conserva la misma traslación que el contorno mientras
-  // el mouse está presionado, también en polígonos y multipolígonos.
-  moveEditingHandles(handles,dx,dy);
+  // Los 8 controles de los rectángulos se actualizan durante el arrastre.
+  if(layer.editing?._moveMarker&&layer.getBounds){
+   layer.editing._moveMarker.setLatLng(layer.getBounds().getCenter());
+   layer.editing._repositionCornerMarkers?.();
+  }
  }
  function cleanup(){
   document.removeEventListener('pointermove',onMove);

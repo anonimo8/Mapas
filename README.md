@@ -1,6 +1,15 @@
 # Territorios Lambayeque · V3 — una sola aplicación
 
-**Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa público se consulta sin iniciar sesión y muestra únicamente las divisiones numeradas con sombreado suave y el total agregado de personas sordas registradas. El editor protegido se abre escribiendo `/editar` en la misma dirección web.
+**Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa público se consulta sin iniciar sesión y ofrece divisiones numeradas, búsqueda por número o dirección, ubicación por GPS e indicaciones externas de ruta. No muestra el contador general grande. El editor protegido se abre escribiendo `/editar` en la misma dirección web.
+
+## Mapa público: búsqueda, GPS, rutas y etiquetas H/M (6 de noviembre de 2026)
+
+- **Buscador combinado:** el usuario elige **Territorio** (número) o **Dirección** (calle/número/distrito). Las direcciones se consultan mediante el servicio Nominatim que ya tenía el Worker (con cuota y caché); el resultado depende de la cobertura cartográfica disponible.
+- **Mi ubicación:** botón GPS con permiso explícito del navegador; requiere conexión segura HTTPS. Señala posición y radio de precisión estimada del dispositivo. No se guarda en D1 ni se envía al Worker.
+- **Cómo llegar:** al seleccionar una dirección o territorio, se abre Google Maps con una ruta a pie. Si el usuario autorizó GPS, se pasa como origen **solo cuando pulsa Cómo llegar**. Si no lo autorizó, Google Maps puede pedir la ubicación. Para territorios, el destino es el centro geométrico aproximado del contorno, no una puerta o dirección exacta.
+- **Sin cuadro de total público:** eliminado completamente de la página y retirado el endpoint antiguo `/api/public-summary`. El resumen global exacto H/M se conserva en la sección privada del editor, pequeño y visible solo con sesión autenticada.
+- **Etiquetas en esquina de cada territorio:** muestran `H` y `M` en tamaño discreto, únicamente para territorios publicados. La nueva ruta pública `/api/public-territory-stats` entrega agregados por sexo sin puntos, notas, coordenadas ni fichas. Por privacidad, las celdas de 1 a 4 personas se muestran como `—`; cero o cinco y más pueden mostrarse como cantidad. **Los valores exactos, incluso los pequeños, permanecen en `/editar`.** Las divisiones sin publicar tampoco exponen sus estadísticas.
+- Sin nuevas tablas, migraciones, librerías o servicios de pago. Actualizar los archivos en GitHub y desplegar el Worker existente. Las rutas externas y el GPS requieren navegador/red compatibles.
 
 ## Corrección: puntos visibles y divisiones en vista pública (5 de noviembre de 2026)
 
@@ -38,7 +47,7 @@ Consulta [CAMBIOS_UX_2026-11-05.md](CAMBIOS_UX_2026-11-05.md) para la lista de c
 - Añadir, cambiar de posición y borrar marcadores permanentes de **hombre/mujer** exclusivamente dentro del editor protegido.
 - Asignar como máximo seis puntos privados por territorio (también pueden existir puntos sin asignar).
 - Encuadrar el mapa y descargar una ficha PDF con mapa y resumen privado para cada territorio.
-- Publicar contornos geográficos revisados. Las fichas H/M, coordenadas, sexo y notas nunca se envían por las APIs públicas; solo se publica el total general agregado en `/api/public-summary` según el umbral de privacidad.
+- Publicar contornos geográficos revisados. Las fichas H/M, coordenadas, sexo y notas nunca se envían por las APIs públicas; solo pueden publicarse recuentos H/M agregados por territorio **publicado**, suprimiendo celdas de 1–4; el total general exacto queda en el administrador.
 - Ver en vivo los cambios autorizados usando WebSockets.
 
 **La opción pública de «Sugerir punto» ya no aparece**, por lo que Turnstile no hace falta para el flujo de trabajo del usuario. El código previo de aportes públicos sigue presente, pero sin botón público.

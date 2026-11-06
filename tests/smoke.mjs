@@ -29,19 +29,31 @@ assert.ok(publicData.territories.every(t=>!('published' in t)&&!('sex' in t)&&!(
 const reviewEnv={...env,PUBLIC_DB:{prepare:sql=>({all:async()=>({results:sql.includes('FROM territories')?[{id:'1',locality:'Lambayeque',number:1,geometry:JSON.stringify(TERRITORY_REFERENCE_SEEDS[0].geometry),published:0}]:[]})})}};
 r=await worker.fetch(req('/api/data'),reviewEnv,{});
 assert.equal((await r.json()).territorySource,'review');
-// El contador público solo divulga un agregado; jamás coordenadas o fichas.
-const summaryEnv=(n)=>({...env,PRIVATE_DB:{prepare(sql){
-  assert.equal(sql,'SELECT COUNT(*) AS total FROM private_person_points');
-  return {first:async()=>({total:n})};
-}}});
-r=await worker.fetch(req('/api/public-summary'),summaryEnv(12),{});
-assert.equal(r.status,200);assert.deepEqual(await r.json(),{status:'ok',deafRegistered:12});
-r=await worker.fetch(req('/api/public-summary'),summaryEnv(3),{});
-assert.deepEqual(await r.json(),{status:'limited'});
-r=await worker.fetch(req('/api/public-summary'),summaryEnv(0),{});
-assert.deepEqual(await r.json(),{status:'ok',deafRegistered:0});
-r=await worker.fetch(req('/api/public-summary'),env,{});
+// Recuento público por territorio: solo publicados, sin datos individuales,
+// con supresión de 1 a 4 hombres o mujeres por privacidad.
+const territoryPublished='11111111-1111-4111-8111-111111111111';
+const territoryDraft='22222222-2222-4222-8222-222222222222';
+const aggregateEnv={...env,
+ PUBLIC_DB:{prepare(sql){
+   assert.match(sql,/SELECT id FROM territories WHERE published=1/);
+   return {all:async()=>({results:[{id:territoryPublished}]})};
+ }},
+ PRIVATE_DB:{prepare(sql){
+   assert.match(sql,/GROUP BY territory_id,sex/);
+   return {all:async()=>({results:[
+     {territory_id:territoryPublished,sex:'hombre',n:2},
+     {territory_id:territoryPublished,sex:'mujer',n:5},
+     {territory_id:territoryDraft,sex:'hombre',n:99}
+   ]})};
+ }}
+};
+r=await worker.fetch(req('/api/public-territory-stats'),aggregateEnv,{});
+assert.equal(r.status,200);
+assert.deepEqual(await r.json(),{status:'ok',counts:[{id:territoryPublished,men:null,women:5}]});
+r=await worker.fetch(req('/api/public-territory-stats'),env,{});
 assert.equal(r.status,503);assert.deepEqual(await r.json(),{status:'unavailable'});
+r=await worker.fetch(req('/api/public-summary'),aggregateEnv,{});
+assert.equal(r.status,404,'La antigua ruta del contador público general debe desaparecer');
 r=await worker.fetch(req('/api/proposals',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),env,{});
 assert.equal(r.status,503);
 r=await worker.fetch(req('/api/live'),env,{});assert.equal(r.status,426);

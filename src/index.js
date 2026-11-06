@@ -57,17 +57,32 @@ export default {
           points:[]
         });
       }
-      // Unicamente la cifra global: nunca se exponen coordenadas, sexo,
-      // identificadores ni contadores de territorios pequeños.
-      if (url.pathname === '/api/public-summary' && method === 'GET') {
+      // Solo estadísticas agregadas por sexo de territorios PUBLICADOS.
+      // Se ocultan las celdas de 1 a 4 personas; jamás se devuelven coordenadas,
+      // identificadores de individuos, notas ni cifras exactas de celdas pequeñas.
+      if (url.pathname === '/api/public-territory-stats' && method === 'GET') {
         if(!env.PRIVATE_DB) return json({status:'unavailable'},503);
         try {
-          const total=await env.PRIVATE_DB.prepare('SELECT COUNT(*) AS total FROM private_person_points').first();
-          const n=Number(total?.total);
-          if(!Number.isSafeInteger(n) || n<0) return json({status:'unavailable'},503);
-          // Cuando el conjunto es muy pequeño no divulgar un número identificable.
-          if(n>0 && n<5) return json({status:'limited'});
-          return json({status:'ok',deafRegistered:n});
+          const published=await env.PUBLIC_DB.prepare('SELECT id FROM territories WHERE published=1 LIMIT 1000').all();
+          const ids=new Set((published.results||[]).map(t=>String(t.id)));
+          const aggregates=await env.PRIVATE_DB.prepare(
+            'SELECT territory_id,sex,COUNT(*) AS n FROM private_person_points WHERE territory_id IS NOT NULL GROUP BY territory_id,sex'
+          ).all();
+          const perTerritory=new Map();
+          for(const id of ids)perTerritory.set(id,{id,men:0,women:0});
+          for(const row of aggregates.results||[]) {
+            const data=perTerritory.get(String(row.territory_id));
+            if(!data)continue;
+            const n=Number(row.n);
+            if(!Number.isSafeInteger(n)||n<0)continue;
+            if(row.sex==='hombre')data.men=n;
+            if(row.sex==='mujer')data.women=n;
+          }
+          return json({status:'ok',counts:[...perTerritory.values()].map(t=>({
+            id:t.id,
+            men:t.men>0&&t.men<5?null:t.men,
+            women:t.women>0&&t.women<5?null:t.women
+          }))});
         }catch(_){return json({status:'unavailable'},503);}
       }
       if (url.pathname === '/api/live' && method === 'GET') {
