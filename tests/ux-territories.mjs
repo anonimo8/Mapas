@@ -13,6 +13,7 @@ assert.ok(pub.includes('polygon.bindTooltip(badge'),'Cada polígono debe mostrar
 assert.ok(!pub.includes('/editar?territorio='),'La vista pública no debe mostrar herramientas de edición');
 assert.ok(!pub.includes('circleMarker'),'La vista pública no debe mostrar puntos individuales');
 assert.ok(pub.includes('/api/public-summary'),'El contador público debe usar el agregado de solo lectura');
+assert.ok(pub.includes('territorySource'),'El mapa público debe diferenciar contornos definitivos y referenciales');
 const publicHTML=await readFile(new URL('../public/index.html',import.meta.url),'utf8');
 assert.ok(publicHTML.includes('id="deafCount"'),'Contador en una esquina del mapa');
 assert.ok(!publicHTML.includes('class="sidebar"')&&publicHTML.includes('class="admin-entry"')&&publicHTML.includes('href="/editar"'),'Acceso discreto y protegido a administración, sin barra lateral');
@@ -21,6 +22,9 @@ for(const id of ['undoChange','redoChange','editSelected','activeMapLabel'])asse
 assert.ok(html.includes('map-shell')&&html.includes('order:0'),'El mapa debe ir primero en móvil');
 assert.ok(html.includes('id="importReferenceTerritories"')&&html.includes('id="publicationOverview"'),'Recuperación de contornos y estado de publicación en el editor');
 assert.ok(html.includes('publication.textContent=t.published?'),'Publicar y ocultar cada territorio de forma individual');
+for(const token of ['adminPointPreview','privatePreview','placePrivateAt(latlng','placeOnMap(latlng)','assignMatchingTerritory(latlng)','adminPrivatePoints']) assert.ok(html.includes(token),'Marcadores provisionales visibles en editor: '+token);
+const server=await readFile(new URL('../src/index.js',import.meta.url),'utf8');
+assert.ok(server.includes('TERRITORY_REFERENCE_SEEDS')&&server.includes('territorySource:source'),'Contornos públicos de referencia si D1 está vacía');
 const auth=await readFile(new URL('../src/auth.js',import.meta.url),'utf8');
 assert.ok(auth.includes("new URLSearchParams(location.search).get('territorio')"),'El login debe conservar la selección');
 console.log('PASS: paleta, polígonos sombreados, etiquetas, privacidad pública, editor e historial.');

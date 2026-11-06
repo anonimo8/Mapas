@@ -2,6 +2,15 @@
 
 **Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa público se consulta sin iniciar sesión y muestra únicamente las divisiones numeradas con sombreado suave y el total agregado de personas sordas registradas. El editor protegido se abre escribiendo `/editar` en la misma dirección web.
 
+## Corrección: puntos visibles y divisiones en vista pública (5 de noviembre de 2026)
+
+- **Edición de puntos:** al pulsar «Añadir punto privado» o «Colocar un punto», el clic en el mapa genera un **marcador provisional visible y arrastrable** antes de guardar, incluso al tocar un polígono. Después de guardar el privado, el marcador permanece visible en el **administrador**, por encima del relleno y los números del territorio; nunca aparece en la vista pública.
+- **Libertad de colocación:** los puntos se pueden ubicar dentro, encima, debajo o fuera de las divisiones. El punto privado que queda fuera de un polígono se guarda **sin asignar**, para evitar asociarlo erróneamente a un territorio; se puede asignar después si su ubicación pertenece al territorio. Se mantiene la regla de hasta seis puntos privados **asignados** por territorio.
+- **Territorios visibles al público:** se muestran los contornos publicados. Si todavía no hay ninguno publicado, se muestran temporalmente los contornos guardados como **preliminares**, sin cambiar sus valores `published`. Si PUBLIC_DB no contiene ningún territorio, se muestran los **11 contornos de referencia NO verificados** del proyecto. Un aviso discreto aclara la condición provisional. Cuando se publica al menos un territorio, solo aparecen los publicados, como siempre.
+- **Seguridad:** las ubicaciones privadas, sexo, notas y número por territorio no salen del editor autenticado. En la vista pública solo se muestran números de territorios, polígonos y el total general con supresión de recuentos de 1–4.
+
+La corrección no cambia el esquema D1, no borra ni reubica registros existentes y no modifica la contraseña ni los bindings. Requiere desplegar en Cloudflare: no se ha podido comprobar contra la D1 real de tu cuenta. Más detalles: [CORRECCION_PUNTOS_Y_VISTA_PUBLICA.md](CORRECCION_PUNTOS_Y_VISTA_PUBLICA.md).
+
 ## Actualización de vista pública (5 de noviembre de 2026)
 
 - **Solo mapa:** toda la pantalla para los territorios, sin barra lateral, puntos visibles, buscadores ni botones de edición.

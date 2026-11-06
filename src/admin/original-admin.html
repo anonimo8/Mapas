@@ -6,6 +6,12 @@
 .private-map-icon{border:0;background:transparent}
 .private-person-bubble{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:3px solid white;border-radius:50%;font-size:13px;font-weight:900;color:#fff;box-shadow:0 2px 8px #21372d65}
 .private-person-bubble.man{background:#2474a8}.private-person-bubble.woman{background:#b45083}
+.private-person-bubble.is-preview{width:36px;height:36px;border:3px dashed #fff;box-shadow:0 0 0 3px #e2a453,0 5px 16px #20382a77;animation:markerAppear .26s ease-out}
+.public-preview-icon{width:28px;height:28px;background:#ee9143;border:3px solid white;border-radius:50%;box-shadow:0 0 0 3px #e9b576,0 4px 14px #30493173}
+@keyframes markerAppear{from{transform:scale(.7);opacity:.4}to{transform:scale(1);opacity:1}}
+.point-hint{margin:9px 0;padding:11px;background:#fff7e6;border:1px solid #e8cf9c;border-radius:11px;color:#78562c;font-size:12px;font-weight:650;line-height:1.5}
+.private-map-icon,.public-map-icon{background:transparent;border:0}
+
 .stat-line{border:1px solid #d3e8d9;background:#eff8f2;border-radius:10px;padding:11px;margin:12px 0;font-weight:700;font-size:12px;color:#265943}
 .private-section{background:#f7fbf8;padding:16px;margin:18px -12px;border-radius:14px;border:1px solid #d3e7d9}
 .private-section h3{color:#175d46}.privacy-tag{color:#0b6547;letter-spacing:.08em;text-transform:uppercase;font-size:10px;font-weight:800}
@@ -86,6 +92,7 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
     <div id="privateSummary" class="stat-line">Cargando puntos privados...</div>
     <button id="newPrivatePoint" class="btn btn-full">＋ Añadir punto privado</button>
     <div id="privateFields" hidden>
+      <p id="privatePlacementHint" class="point-hint">Primero selecciona una posición en el mapa. Verás un marcador provisional que podrás mover antes de guardar.</p>
       <label for="privateSex">Sexo</label>
       <select id="privateSex"><option value="hombre">Hombre (H)</option><option value="mujer">Mujer (M)</option></select>
       <label for="privateTerritory">Asignar a territorio</label>
@@ -103,7 +110,7 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
   <section class="section"><h3>Puntos de referencia públicos <span id="pendingCount">0</span></h3><div id="pointList" class="list"></div>
     <p class="small">Selecciona una propuesta, revisa sus datos y apruébala o recházala. También puedes añadir puntos públicos desde el mapa.</p>
     <div class="row"><button class="btn alt btn-full" id="newPoint">＋ Colocar un punto en el mapa</button></div>
-    <div id="pointFields" hidden>
+    <div id="pointFields" hidden><p id="publicPlacementHint" class="point-hint">Haz clic en el mapa: verás un marcador naranja provisional antes de guardar.</p>
       <label for="pTitle">Nombre público</label><input id="pTitle" maxlength="90">
       <label for="pCategory">Categoría</label><select id="pCategory"><option value="referencia">Referencia</option><option value="acceso">Acceso</option><option value="servicio">Servicio</option><option value="otro">Otro</option></select>
       <label for="pDesc">Descripción geográfica pública</label><textarea rows="2" id="pDesc" maxlength="300"></textarea>
@@ -126,7 +133,13 @@ const territoryColor=window.TerritoryPalette.territoryColor;
 const cities={'Lambayeque':[-6.704,-79.908],'Mochumí':[-6.54778,-79.865],'Túcume':[-6.510152,-79.859588],'Íllimo':[-6.474021,-79.855127],'Pacora':[-6.428889,-79.838889],'Mórrope':[-6.540375,-80.015366]};
 const map=L.map('map').setView(cities.Lambayeque,14);
 const tileLayer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,crossOrigin:'anonymous',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+// Paneles separados: los puntos siempre quedan visualmente por encima del relleno
+// de los polígonos, sin importar si caen dentro, arriba, abajo o fuera del contorno.
+const pointPane=map.createPane('adminPublicPoints');pointPane.style.zIndex='660';
+const privatePane=map.createPane('adminPrivatePoints');privatePane.style.zIndex='680';
+const previewPane=map.createPane('adminPointPreview');previewPane.style.zIndex='720';
 const fg=new L.FeatureGroup().addTo(map),pointMarkers=new L.LayerGroup().addTo(map),privateMarkers=new L.LayerGroup().addTo(map);
+let privatePreview=null,publicPreview=null;
 let territories=[],points=[],privatePoints=[],selectedId=null,selectedLayer=null,pId=null,placingPoint=false,privatePlacing=false,privateSelectedId=null;
 let privateReady=false;
 let history=[],historyPosition=-1,restoringHistory=false,historyTimer=null,editingLayer=null,draftSerial=0;
@@ -138,7 +151,8 @@ const setStatus=(message)=>{$('status').textContent=message;};
 const layerFor=(t)=>{const x=L.geoJSON({type:'Feature',geometry:t.geometry,properties:{}}).getLayers()[0];
  const color=territoryColor(t);x.setStyle({color,fillColor:color,fillOpacity:t.published?.22:.13,weight:3,opacity:1,dashArray:t.published?null:'7 5'});
  const tag=document.createElement('span');tag.textContent='#'+t.number;tag.style.setProperty('--territory-color',color);
- x.bindTooltip(tag,{permanent:true,direction:'center',className:'territory-label-admin'});x.on('click',()=>selectTerritory(t.id));return x;};
+ x.bindTooltip(tag,{permanent:true,direction:'center',className:'territory-label-admin'});
+ x.on('click',e=>{if(privatePlacing||placingPoint){placeOnMap(e.latlng);L.DomEvent.stopPropagation(e);return;}selectTerritory(t.id);});return x;};
 const layerForDraft=(geometry,key)=>{const layer=L.geoJSON({type:'Feature',geometry,properties:{}}).getLayers()[0];layer._draftId=key;layer.setStyle({color:'#437E6F',fillColor:'#437E6F',fillOpacity:.18,weight:3,dashArray:'6 4'});layer.on('click',()=>{selectedId=null;selectedLayer=layer;updateTerritoryControls();});return layer;};
 function updateTerritoryControls(){
  const enabled=!!selectedLayer;const saved=!!selectedId;
@@ -230,7 +244,7 @@ async function reload(){try{
  stopIndividualEditing();fg.clearLayers();pointMarkers.clearLayers();
  for(const t of territories){const layer=layerFor(t);layer._territoryId=t.id;fg.addLayer(layer);}
  for(const p of points.filter(x=>x.status==='approved')){
-  const m=L.circleMarker([p.lat,p.lng],{radius:7,color:'#fff',weight:2,fillColor:'#e28a3c',fillOpacity:1});const safe=document.createElement('strong');safe.textContent=p.title;m.bindPopup(safe);pointMarkers.addLayer(m);
+  const m=L.circleMarker([p.lat,p.lng],{pane:'adminPublicPoints',radius:9,color:'#fff',weight:3,fillColor:'#e28a3c',fillOpacity:1});const safe=document.createElement('strong');safe.textContent=p.title;m.bindPopup(safe);pointMarkers.addLayer(m);
  }
  renderLists();
  await reloadPrivate();
@@ -323,7 +337,73 @@ $('deleteTerritory').addEventListener('click',async()=>{
  stopIndividualEditing();
  try{await api(`/api/admin/territories/${selectedId}`,{method:'DELETE'});resetTerritory();await reload();setStatus('Territorio eliminado.');}catch(e){setStatus(e.message);}
 });
+// El número de territorio no obliga a ubicar puntos dentro de su polígono.
+// Si un punto cae fuera de cualquier contorno, queda sin asignar en lugar de rechazarse.
+function containsRing(point,ring){
+ let inside=false;
+ for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+  const [xi,yi]=ring[i],[xj,yj]=ring[j];
+  const cross=(point.lng-xi)*(yj-yi)-(point.lat-yi)*(xj-xi);
+  if(Math.abs(cross)<1e-9&&point.lng>=Math.min(xi,xj)-1e-9&&point.lng<=Math.max(xi,xj)+1e-9&&point.lat>=Math.min(yi,yj)-1e-9&&point.lat<=Math.max(yi,yj)+1e-9)return true;
+  if((yi>point.lat)!==(yj>point.lat)&&point.lng<(xj-xi)*(point.lat-yi)/(yj-yi)+xi)inside=!inside;
+ }
+ return inside;
+}
+function insideGeometry(point,geometry){
+ const checkPolygon=rings=>Array.isArray(rings?.[0])&&containsRing(point,rings[0])&&!rings.slice(1).some(r=>containsRing(point,r));
+ if(geometry?.type==='Polygon')return checkPolygon(geometry.coordinates);
+ if(geometry?.type==='MultiPolygon')return geometry.coordinates.some(checkPolygon);
+ return false;
+}
+function assignMatchingTerritory(latlng){
+ const current=$('privateTerritory').value;
+ const matching=territories.find(t=>t.id===current&&insideGeometry(latlng,t.geometry))||territories.find(t=>insideGeometry(latlng,t.geometry));
+ $('privateTerritory').value=matching?.id||'';
+ return matching;
+}
+function removePreview(kind){
+ if(kind==='private'&&privatePreview){map.removeLayer(privatePreview);privatePreview=null;}
+ if(kind==='public'&&publicPreview){map.removeLayer(publicPreview);publicPreview=null;}
+}
+function showPrivatePreview(latlng){
+ removePreview('private');
+ const sex=$('privateSex').value==='hombre'?'hombre':'mujer';
+ const letter=sex==='hombre'?'H':'M';
+ privatePreview=L.marker(latlng,{pane:'adminPointPreview',draggable:true,zIndexOffset:1000,icon:L.divIcon({
+  className:'private-map-icon',html:`<span class="private-person-bubble ${sex==='hombre'?'man':'woman'} is-preview">${letter}</span>`,iconSize:[36,36],iconAnchor:[18,18]
+ })}).addTo(map);
+ privatePreview.on('dragend',()=>{
+  const p=privatePreview.getLatLng();placePrivateAt(p,'Punto provisional movido.');
+ });
+}
+function placePrivateAt(latlng,heading='Punto provisional visible.'){
+ $('privateLat').value=latlng.lat.toFixed(7);$('privateLng').value=latlng.lng.toFixed(7);
+ const t=assignMatchingTerritory(latlng);
+ showPrivatePreview(latlng);
+ $('privatePlacementHint').textContent=heading+' '+(t?`Dentro del territorio #${t.number}.`:'Fuera de las divisiones: quedará sin asignar.')+' Arrastra el marcador si deseas moverlo y pulsa Guardar.';
+ $('privateStatus').textContent='Marcador provisional colocado sobre el mapa. Todavía no está guardado.';
+}
+function showPublicPreview(latlng){
+ removePreview('public');
+ publicPreview=L.marker(latlng,{pane:'adminPointPreview',draggable:true,zIndexOffset:800,icon:L.divIcon({className:'public-map-icon',html:'<span class="public-preview-icon"></span>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(map);
+ publicPreview.on('dragend',()=>{
+  const p=publicPreview.getLatLng();$('pLat').value=p.lat.toFixed(7);$('pLng').value=p.lng.toFixed(7);
+  $('publicPlacementHint').textContent='Punto provisional movido. Pulsa Guardar para conservarlo.';
+ });
+}
+function placeOnMap(latlng){
+ if(privatePlacing){
+  privatePlacing=false;map.getContainer().style.cursor='';placePrivateAt(latlng);return;
+ }
+ if(!placingPoint)return;
+ placingPoint=false;map.getContainer().style.cursor='';
+ $('pLat').value=latlng.lat.toFixed(7);$('pLng').value=latlng.lng.toFixed(7);
+ showPublicPreview(latlng);
+ $('publicPlacementHint').textContent='Marcador naranja provisional visible: arrástralo si deseas cambiarlo y pulsa Guardar.';
+ setStatus('Punto provisional colocado. Completa el nombre y guarda.');
+}
 function selectPoint(p){
+ removePreview('public');placingPoint=false;
  pId=p?.id||null;
  $('pointFields').hidden=false;$('pTitle').value=p?.title||'';$('pCategory').value=p?.category||'referencia';
  $('pDesc').value=p?.description||'';$('pStatus').value=p?.status||'approved';
@@ -331,12 +411,14 @@ function selectPoint(p){
  $('deletePoint').disabled=!pId;
  if(p)map.setView([p.lat,p.lng],17);renderLists();
 }
-$('newPoint').addEventListener('click',()=>{placingPoint=true;selectPoint(null);setStatus('Haz clic sobre el mapa para colocar el nuevo punto.');map.getContainer().style.cursor='crosshair';});
-map.on('click',e=>{
- if(privatePlacing){privatePlacing=false;map.getContainer().style.cursor='';$('privateLat').value=e.latlng.lat.toFixed(7);$('privateLng').value=e.latlng.lng.toFixed(7);$('privateStatus').textContent='Ubicación seleccionada. Elige sexo y pulsa Guardar punto privado.';return;}
- if(!placingPoint)return;placingPoint=false;map.getContainer().style.cursor='';
- $('pLat').value=e.latlng.lat.toFixed(7);$('pLng').value=e.latlng.lng.toFixed(7);
- setStatus('Coordenadas seleccionadas. Completa el nombre y guarda.');
+$('newPoint').addEventListener('click',()=>{
+ selectPoint(null);privatePlacing=false;removePreview('private');placingPoint=true;
+ $('publicPlacementHint').textContent='Haz clic en cualquier lugar, dentro o fuera de los territorios.';
+ setStatus('Toca el mapa para colocar el punto; aparecerá inmediatamente.');map.getContainer().style.cursor='crosshair';revealMapOnMobile();
+});
+map.on('click',e=>placeOnMap(e.latlng));
+$('privateSex').addEventListener('change',()=>{
+ if(privatePreview)showPrivatePreview(privatePreview.getLatLng());
 });
 $('savePoint').addEventListener('click',async()=>{
  const payload={title:$('pTitle').value,category:$('pCategory').value,description:$('pDesc').value,
@@ -345,12 +427,12 @@ $('savePoint').addEventListener('click',async()=>{
  try{
   if(!pId&&payload.status!=='approved')return setStatus('Los puntos nuevos se crean como aprobados. Para pendientes usa aportes públicos.');
   await api(pId?`/api/admin/points/${pId}`:'/api/admin/new-point',{method:pId?'PUT':'POST',body:JSON.stringify(payload)});
-  pId=null;$('pointFields').hidden=true;await reload();setStatus('Punto guardado.');
+  removePreview('public');pId=null;$('pointFields').hidden=true;await reload();setStatus('Punto guardado.');
  }catch(e){setStatus(e.message);}
 });
 $('deletePoint').addEventListener('click',async()=>{
  if(!pId||!confirm('¿Eliminar este punto?'))return;
- try{await api(`/api/admin/points/${pId}`,{method:'DELETE'});pId=null;$('pointFields').hidden=true;await reload();setStatus('Punto eliminado.');}catch(e){setStatus(e.message);}
+ try{await api(`/api/admin/points/${pId}`,{method:'DELETE'});removePreview('public');pId=null;$('pointFields').hidden=true;await reload();setStatus('Punto eliminado.');}catch(e){setStatus(e.message);}
 });
 
 // ---- DATOS CONFIDENCIALES: rutas y D1 independientes del Worker público ----
@@ -393,21 +475,24 @@ function drawPrivateMarkers(){
  for(const p of privatePoints){
   const h=p.sex==='hombre',marker=L.marker([p.lat,p.lng],{draggable:true,icon:L.divIcon({
    className:'private-map-icon',html:`<span class="private-person-bubble ${h?'man':'woman'}">${h?'H':'M'}</span>`,iconSize:[28,28],iconAnchor:[14,14]
-  })});
+  }),pane:'adminPrivatePoints',zIndexOffset:500});
   marker.on('click',()=>selectPrivatePoint(p));
   marker.on('dragend',()=>{
     selectPrivatePoint(p,false);
     const pos=marker.getLatLng();$('privateLat').value=pos.lat.toFixed(7);$('privateLng').value=pos.lng.toFixed(7);
+    const t=assignMatchingTerritory(pos);
+    $('privatePlacementHint').textContent=(t?`Dentro del territorio #${t.number}.`:'Fuera de las divisiones: quedará sin asignar.')+' Pulsa Guardar para conservar la nueva posición.';
     $('privateStatus').textContent='Marcador desplazado: pulsa Guardar punto privado para conservar la nueva posición.';
   });
   privateMarkers.addLayer(marker);
  }
 }
 function selectPrivatePoint(p,pan=true){
- privateSelectedId=p?.id||null;privatePlacing=false;
+ removePreview('private');privateSelectedId=p?.id||null;privatePlacing=false;
  $('privateFields').hidden=false;
  $('privateSex').value=p?.sex||'hombre';
- $('privateTerritory').value=p?.territory_id||selectedId||'';
+ $('privateTerritory').value=p?.territory_id||'';
+ $('privatePlacementHint').textContent=p?'Arrastra el punto en el mapa y pulsa Guardar para actualizarlo.':'Selecciona una ubicación en el mapa. Un marcador provisional aparecerá antes de guardar.';
  $('privateNote').value=p?.note||'';
  $('privateLat').value=p?.lat??'';$('privateLng').value=p?.lng??'';
  $('deletePrivatePoint').disabled=!p;
@@ -417,8 +502,9 @@ function selectPrivatePoint(p,pan=true){
 $('newPrivatePoint').addEventListener('click',()=>{
  if(!privateReady){$('privateStatus').textContent='Configura antes la D1 privada en Cloudflare.';return;}
  selectPrivatePoint(null);privatePlacing=true;
- $('privateStatus').textContent='Haz clic en el mapa para fijar la nueva ubicación confidencial.';
- map.getContainer().style.cursor='crosshair';
+ placingPoint=false;removePreview('public');
+ $('privateStatus').textContent='Haz clic en cualquier lugar del mapa, dentro o fuera de un contorno. El punto será visible al instante.';
+ map.getContainer().style.cursor='crosshair';revealMapOnMobile();
 });
 $('savePrivatePoint').addEventListener('click',async()=>{
  if(!privateReady){$('privateStatus').textContent='La base PRIVATE_DB aún no está conectada.';return;}
@@ -430,15 +516,24 @@ $('savePrivatePoint').addEventListener('click',async()=>{
   await api(privateSelectedId?`/api/admin/private/points/${privateSelectedId}`:'/api/admin/private/points',{
    method:privateSelectedId?'PUT':'POST',body:JSON.stringify(payload)
   });
-  privateSelectedId=null;$('privateFields').hidden=true;await reloadPrivate();
-  $('privateStatus').textContent='Punto privado guardado permanentemente.';
+  removePreview('private');privateSelectedId=null;$('privateFields').hidden=true;await reloadPrivate();
+  map.setView([lat,lng],Math.max(map.getZoom(),15));
+  $('privateStatus').textContent='Punto privado guardado y visible en el mapa administrativo.';
  }catch(e){$('privateStatus').textContent=e.message;}
+});
+for(const id of ['privateLat','privateLng'])$(id).addEventListener('change',()=>{
+ const lat=Number($('privateLat').value),lng=Number($('privateLng').value);
+ if($('privateLat').value.trim()&&$('privateLng').value.trim()&&Number.isFinite(lat)&&Number.isFinite(lng))placePrivateAt(L.latLng(lat,lng),'Punto provisional actualizado.');
+});
+for(const id of ['pLat','pLng'])$(id).addEventListener('change',()=>{
+ const lat=Number($('pLat').value),lng=Number($('pLng').value);
+ if($('pLat').value.trim()&&$('pLng').value.trim()&&Number.isFinite(lat)&&Number.isFinite(lng))showPublicPreview(L.latLng(lat,lng));
 });
 $('deletePrivatePoint').addEventListener('click',async()=>{
  if(!privateSelectedId||!confirm('¿Eliminar definitivamente este punto privado?'))return;
  try{
   await api(`/api/admin/private/points/${privateSelectedId}`,{method:'DELETE'});
-  privateSelectedId=null;$('privateFields').hidden=true;await reloadPrivate();
+  removePreview('private');privateSelectedId=null;$('privateFields').hidden=true;await reloadPrivate();
   $('privateStatus').textContent='Punto privado eliminado.';
  }catch(e){$('privateStatus').textContent=e.message;}
 });

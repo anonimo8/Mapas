@@ -14,6 +14,7 @@ const notice=document.getElementById('mapNotice');
 const deafCount=document.getElementById('deafCount');
 let initialFit=false;
 let lastDataSignature='';
+let lastTerritorySource='';
 
 function setNotice(message){notice.textContent=message;notice.hidden=!message;}
 function isValidShape(t){
@@ -21,10 +22,12 @@ function isValidShape(t){
     (t.geometry.type==='Polygon'||t.geometry.type==='MultiPolygon') &&
     Array.isArray(t.geometry.coordinates);
 }
-function renderTerritories(territories){
+function renderTerritories(territories,source='published'){
+  const previousSource=lastTerritorySource;
+  lastTerritorySource=source;
   const visible=territories.filter(isValidShape);
   const signature=JSON.stringify(visible.map(t=>[t.id,t.number,t.geometry]));
-  if(signature===lastDataSignature)return;
+  if(signature===lastDataSignature){updateSourceNotice(visible,source);return;}
   lastDataSignature=signature;
   shapes.clearLayers();
   for(const t of visible){
@@ -46,22 +49,28 @@ function renderTerritories(territories){
     layer.addTo(shapes);
   }
   if(visible.length){
-    setNotice('');
-    if(!initialFit){
+    updateSourceNotice(visible,source);
+    if(!initialFit || (previousSource && previousSource!==source)){
       initialFit=true;
       map.fitBounds(shapes.getBounds(),{
         paddingTopLeft:[25,65],paddingBottomRight:[25,25],maxZoom:15,
         animate:false
       });
     }
-  }else setNotice('No hay territorios publicados. Abre Administración para revisar y publicar los contornos guardados.');
+  }else setNotice('No se encontraron contornos. Abre Administración para revisar la base de datos.');
+}
+function updateSourceNotice(visible,source){
+  if(!visible.length)return;
+  if(source==='reference')setNotice('Contornos de ejemplo, aproximados y sin verificar. El administrador debe recuperar y revisar las divisiones.');
+  else if(source==='review')setNotice('Divisiones guardadas en revisión. Verifica y publica los contornos desde Administración.');
+  else setNotice('');
 }
 async function updateTerritories(){
   try{
     const response=await fetch('/api/data',{cache:'no-store'});
     if(!response.ok)throw Error('Sin respuesta');
     const data=await response.json();
-    renderTerritories(Array.isArray(data.territories)?data.territories:[]);
+    renderTerritories(Array.isArray(data.territories)?data.territories:[],data.territorySource||'published');
   }catch(_){
     if(!initialFit)setNotice('El mapa no está disponible temporalmente.');
   }

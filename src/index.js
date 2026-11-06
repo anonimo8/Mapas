@@ -1,4 +1,5 @@
 import adminHandler from './admin/index.js';
+import {TERRITORY_REFERENCE_SEEDS} from './admin/reference-territories.js';
 import {handleAuthRoute,hasAdminSession} from './auth.js';
 import { DurableObject } from 'cloudflare:workers';
 
@@ -40,13 +41,20 @@ export default {
         return json({turnstileSiteKey: env.TURNSTILE_SITE_KEY || '', coverage: ['Lambayeque','Mochumí','Túcume','Íllimo','Pacora','Mórrope']});
       }
       if (url.pathname === '/api/data' && method === 'GET') {
-        const [t,p] = await Promise.all([
-          env.PUBLIC_DB.prepare('SELECT id,locality,number,geometry,updated_at FROM territories WHERE published=1 ORDER BY locality,number LIMIT 1000').all(),
-          env.PUBLIC_DB.prepare("SELECT id,lat,lng,title,category,description,updated_at FROM points WHERE status='approved' ORDER BY created_at DESC LIMIT 1000").all()
-        ]);
+        // Mostrar primero los territorios publicados. Si todavía no se publicó ninguno,
+        // mostrar los contornos guardados como vista preliminar, sin modificar su estado.
+        // Una D1 pública vacía utiliza exclusivamente geometrías de referencia orientativas
+        // incluidas en el proyecto; no se insertan ni reemplazan registros de D1.
+        const t=await env.PUBLIC_DB.prepare('SELECT id,locality,number,geometry,published,updated_at FROM territories ORDER BY locality,number LIMIT 1000').all();
+        const saved=(t.results||[]).map(x=>({...x,geometry:JSON.parse(x.geometry)}));
+        const published=saved.filter(x=>x.published===1 || x.published===true);
+        const source=published.length?'published':saved.length?'review':'reference';
+        const visible=published.length?published:saved.length?saved:TERRITORY_REFERENCE_SEEDS;
         return json({
-          territories: (t.results||[]).map(x=>({...x,geometry:JSON.parse(x.geometry)})),
-          points: p.results||[]
+          territories:visible.map(({id,locality,number,geometry,updated_at})=>({id,locality,number,geometry,updated_at})),
+          territorySource:source,
+          // Las ubicaciones individuales no forman parte de la vista pública.
+          points:[]
         });
       }
       // Unicamente la cifra global: nunca se exponen coordenadas, sexo,

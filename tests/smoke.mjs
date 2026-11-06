@@ -1,12 +1,14 @@
 import {strict as assert} from 'node:assert';
 import {readFile} from 'node:fs/promises';
 import admin from '../src/admin/index.js';
+import {TERRITORY_REFERENCE_SEEDS} from '../src/admin/reference-territories.js';
 import {handleAuthRoute,hasAdminSession} from '../src/auth.js';
 const workerText=await readFile(new URL('../src/index.js',import.meta.url),'utf8');
 const adapted=workerText.replace("import { DurableObject } from 'cloudflare:workers';",'class DurableObject {}')
   .replace("import adminHandler from './admin/index.js';",'')
+  .replace("import {TERRITORY_REFERENCE_SEEDS} from './admin/reference-territories.js';",'const TERRITORY_REFERENCE_SEEDS=globalThis._territoryReferenceSeeds;')
   .replace("import {handleAuthRoute,hasAdminSession} from './auth.js';",'const adminHandler=globalThis._adminHandler; const handleAuthRoute=globalThis._handleAuthRoute;const hasAdminSession=globalThis._hasAdminSession;');
-globalThis._adminHandler=admin;globalThis._handleAuthRoute=handleAuthRoute;globalThis._hasAdminSession=hasAdminSession;
+globalThis._territoryReferenceSeeds=TERRITORY_REFERENCE_SEEDS;globalThis._adminHandler=admin;globalThis._handleAuthRoute=handleAuthRoute;globalThis._hasAdminSession=hasAdminSession;
 const {default:worker}=await import('data:text/javascript;base64,'+Buffer.from(adapted).toString('base64'));
 const prepare=(sql)=>({
   all:async()=>({results:[]}),first:async()=>null,
@@ -18,7 +20,15 @@ let r=await worker.fetch(req('/api/config'),env,{});
 assert.equal(r.status,200);assert.deepEqual((await r.json()).coverage,['Lambayeque','Mochumí','Túcume','Íllimo','Pacora','Mórrope']);
 r=await worker.fetch(req('/api/health'),env,{});assert.equal(r.status,200);assert.equal((await r.json()).ok,true);
 r=await worker.fetch(req('/api/data'),env,{});
-assert.equal(r.status,200);assert.deepEqual(await r.json(),{territories:[],points:[]});
+assert.equal(r.status,200);const publicData=await r.json();
+assert.equal(publicData.territorySource,'reference');
+assert.equal(publicData.territories.length,11);
+assert.deepEqual(publicData.points,[]);
+assert.ok(publicData.territories.every(t=>!('published' in t)&&!('sex' in t)&&!('note' in t)));
+// Los territorios guardados pero sin publicar deben verse provisionalmente (sin puntos privados).
+const reviewEnv={...env,PUBLIC_DB:{prepare:sql=>({all:async()=>({results:sql.includes('FROM territories')?[{id:'1',locality:'Lambayeque',number:1,geometry:JSON.stringify(TERRITORY_REFERENCE_SEEDS[0].geometry),published:0}]:[]})})}};
+r=await worker.fetch(req('/api/data'),reviewEnv,{});
+assert.equal((await r.json()).territorySource,'review');
 // El contador público solo divulga un agregado; jamás coordenadas o fichas.
 const summaryEnv=(n)=>({...env,PRIVATE_DB:{prepare(sql){
   assert.equal(sql,'SELECT COUNT(*) AS total FROM private_person_points');
