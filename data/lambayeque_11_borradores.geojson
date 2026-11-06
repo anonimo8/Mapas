@@ -1,0 +1,606 @@
+{
+  "type": "FeatureCollection",
+  "name": "Lambayeque 11 territorios - borradores por revisar",
+  "metadata": {
+    "source": "TERRITORIO _Lambayeque.pdf.pdf (11 capturas sin poligonos vectoriales)",
+    "precision": "orientativa/no georreferenciada; no usar como demarcacion definitiva",
+    "containsPersonalData": false,
+    "published": false
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "4fbbe032-1d3d-510c-893e-1e9280c473f4",
+      "properties": {
+        "number": 1,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-01.webp",
+        "description": "Sector LA-718 y Papucho (oriental)",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.899,
+              -6.711
+            ],
+            [
+              -79.899,
+              -6.708624
+            ],
+            [
+              -79.899,
+              -6.7056
+            ],
+            [
+              -79.89612,
+              -6.7056
+            ],
+            [
+              -79.893,
+              -6.7056
+            ],
+            [
+              -79.893,
+              -6.708516
+            ],
+            [
+              -79.893,
+              -6.711
+            ],
+            [
+              -79.8957,
+              -6.711
+            ],
+            [
+              -79.899,
+              -6.711
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "e8d073e1-26dc-5964-ae1d-3a4015929c2f",
+      "properties": {
+        "number": 2,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-02.webp",
+        "description": "Sector Monsalve Baca / LA-718 (noreste)",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9028,
+              -6.7053
+            ],
+            [
+              -79.9028,
+              -6.703056
+            ],
+            [
+              -79.9028,
+              -6.7002
+            ],
+            [
+              -79.901072,
+              -6.7002
+            ],
+            [
+              -79.8992,
+              -6.7002
+            ],
+            [
+              -79.8992,
+              -6.702954
+            ],
+            [
+              -79.8992,
+              -6.7053
+            ],
+            [
+              -79.90082,
+              -6.7053
+            ],
+            [
+              -79.9028,
+              -6.7053
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "3004929d-f78b-5034-947a-23d7b958ae17",
+      "properties": {
+        "number": 3,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-03.webp",
+        "description": "Sector Enrique Baca Mattos / Miraflores",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9018,
+              -6.6999
+            ],
+            [
+              -79.9018,
+              -6.69704
+            ],
+            [
+              -79.9018,
+              -6.6934
+            ],
+            [
+              -79.8982,
+              -6.6934
+            ],
+            [
+              -79.8943,
+              -6.6934
+            ],
+            [
+              -79.8943,
+              -6.69691
+            ],
+            [
+              -79.8943,
+              -6.6999
+            ],
+            [
+              -79.89767499999999,
+              -6.6999
+            ],
+            [
+              -79.9018,
+              -6.6999
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "c4f2e3b7-04ca-542d-92b0-7703b721f624",
+      "properties": {
+        "number": 4,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-04.webp",
+        "description": "Sector Mocce / Panamericana Norte (noroeste)",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9332,
+              -6.7019
+            ],
+            [
+              -79.9332,
+              -6.6986
+            ],
+            [
+              -79.9332,
+              -6.6944
+            ],
+            [
+              -79.929264,
+              -6.6944
+            ],
+            [
+              -79.925,
+              -6.6944
+            ],
+            [
+              -79.925,
+              -6.69845
+            ],
+            [
+              -79.925,
+              -6.7019
+            ],
+            [
+              -79.92869,
+              -6.7019
+            ],
+            [
+              -79.9332,
+              -6.7019
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "f824f87c-14bd-5352-840e-3910536667e7",
+      "properties": {
+        "number": 5,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-05.webp",
+        "description": "Sector norte / Enrique Baca Mattos",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9155,
+              -6.7023
+            ],
+            [
+              -79.9155,
+              -6.700056
+            ],
+            [
+              -79.9155,
+              -6.6972
+            ],
+            [
+              -79.91060399999999,
+              -6.6972
+            ],
+            [
+              -79.9053,
+              -6.6972
+            ],
+            [
+              -79.9053,
+              -6.699954
+            ],
+            [
+              -79.9053,
+              -6.7023
+            ],
+            [
+              -79.90988999999999,
+              -6.7023
+            ],
+            [
+              -79.9155,
+              -6.7023
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "651ca952-a2b9-5f91-ad33-870a1a34b08f",
+      "properties": {
+        "number": 6,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-06.webp",
+        "description": "Sector Plaza de Armas / Bolívar",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.913,
+              -6.7086
+            ],
+            [
+              -79.913,
+              -6.706224
+            ],
+            [
+              -79.913,
+              -6.7032
+            ],
+            [
+              -79.90829599999999,
+              -6.7032
+            ],
+            [
+              -79.9032,
+              -6.7032
+            ],
+            [
+              -79.9032,
+              -6.706116
+            ],
+            [
+              -79.9032,
+              -6.7086
+            ],
+            [
+              -79.90760999999999,
+              -6.7086
+            ],
+            [
+              -79.913,
+              -6.7086
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "36bb8121-0bcd-5970-9979-4b07be590e8d",
+      "properties": {
+        "number": 7,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-07.webp",
+        "description": "Sector Piura / José Olaya / Kennedy",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9232,
+              -6.7038
+            ],
+            [
+              -79.9232,
+              -6.700852
+            ],
+            [
+              -79.9232,
+              -6.6971
+            ],
+            [
+              -79.9196,
+              -6.6971
+            ],
+            [
+              -79.9157,
+              -6.6971
+            ],
+            [
+              -79.9157,
+              -6.700718
+            ],
+            [
+              -79.9157,
+              -6.7038
+            ],
+            [
+              -79.91907499999999,
+              -6.7038
+            ],
+            [
+              -79.9232,
+              -6.7038
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "2e57b87c-6fc7-5746-985a-0b60b4d6761f",
+      "properties": {
+        "number": 8,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-08.webp",
+        "description": "Sector Chiclayo / Ferreñafe (occidente)",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9328,
+              -6.7092
+            ],
+            [
+              -79.9328,
+              -6.707044
+            ],
+            [
+              -79.9328,
+              -6.7043
+            ],
+            [
+              -79.92848,
+              -6.7043
+            ],
+            [
+              -79.9238,
+              -6.7043
+            ],
+            [
+              -79.9238,
+              -6.706946
+            ],
+            [
+              -79.9238,
+              -6.7092
+            ],
+            [
+              -79.92785,
+              -6.7092
+            ],
+            [
+              -79.9328,
+              -6.7092
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "378f37bc-1dee-5fae-997a-dd3088c32a92",
+      "properties": {
+        "number": 9,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-09.webp",
+        "description": "Sector sur / Complejo San Martín",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9127,
+              -6.7172
+            ],
+            [
+              -79.9127,
+              -6.713592
+            ],
+            [
+              -79.9127,
+              -6.709
+            ],
+            [
+              -79.90718,
+              -6.709
+            ],
+            [
+              -79.9012,
+              -6.709
+            ],
+            [
+              -79.9012,
+              -6.7134279999999995
+            ],
+            [
+              -79.9012,
+              -6.7172
+            ],
+            [
+              -79.906375,
+              -6.7172
+            ],
+            [
+              -79.9127,
+              -6.7172
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cf2a984f-5c10-5926-b04b-e30b2cd1d218",
+      "properties": {
+        "number": 10,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-10.webp",
+        "description": "Sector occidental sur / Las Dunas",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9265,
+              -6.7186
+            ],
+            [
+              -79.9265,
+              -6.715696
+            ],
+            [
+              -79.9265,
+              -6.712
+            ],
+            [
+              -79.921076,
+              -6.712
+            ],
+            [
+              -79.9152,
+              -6.712
+            ],
+            [
+              -79.9152,
+              -6.715564
+            ],
+            [
+              -79.9152,
+              -6.7186
+            ],
+            [
+              -79.920285,
+              -6.7186
+            ],
+            [
+              -79.9265,
+              -6.7186
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "f2bf99c9-76fd-50f2-9fe9-d5db62060c1e",
+      "properties": {
+        "number": 11,
+        "locality": "Lambayeque",
+        "reference": "/reference-map/territorio-11.webp",
+        "description": "Sector periférico carretera 108",
+        "status": "BORRADOR: revisar limites"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9397,
+              -6.7087
+            ],
+            [
+              -79.9397,
+              -6.706632
+            ],
+            [
+              -79.9397,
+              -6.704
+            ],
+            [
+              -79.936676,
+              -6.704
+            ],
+            [
+              -79.9334,
+              -6.704
+            ],
+            [
+              -79.9334,
+              -6.706538
+            ],
+            [
+              -79.9334,
+              -6.7087
+            ],
+            [
+              -79.93623500000001,
+              -6.7087
+            ],
+            [
+              -79.9397,
+              -6.7087
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

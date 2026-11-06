@@ -1,5 +1,6 @@
 // Editor en la misma aplicación; se invoca únicamente tras validar la sesión del administrador.
 import { ADMIN_HTML } from './admin-page.js';
+import { TERRITORY_REFERENCE_SEEDS } from './reference-territories.js';
 import { EXPORT_PDF_JS } from './export-pdf.js';
 import { normalizePrivatePoint, validatePrivateAssignment, pointInPolygon, isUUID } from './private-points.js';
 const send=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}});
@@ -81,6 +82,22 @@ export default {
         return send({ok:true});
       }
 
+      // Importar referencias geograficas preliminares de las 11 paginas.
+      // Solo ejecutable tras autenticar en src/index.js (no existe ruta publica).
+      if(url.pathname==='/api/admin/import-lambayeque-11' && method==='POST'){
+        if(!env.PUBLIC_DB)return fail('Falta PUBLIC_DB.',503);
+        let created=0,existing=0;
+        for(const t of TERRITORY_REFERENCE_SEEDS){
+          // Respetar cualquier numero existente: no editar ni borrar trabajo del usuario.
+          const old=await env.PUBLIC_DB.prepare('SELECT id FROM territories WHERE number=?').bind(t.number).first();
+          if(old){existing++;continue;}
+          const value=normalizeTerritory(t);
+          await env.PUBLIC_DB.prepare('INSERT INTO territories(id,locality,number,geometry,published) VALUES(?,?,?,?,0)')
+            .bind(t.id,value.locality,value.number,value.geometry).run();
+          created++;
+        }
+        return send({ok:true,created,existing,warning:'Estos contornos son aproximaciones iniciales. Edita y verifica los límites con las imágenes de referencia antes de publicarlos.'});
+      }
       if(url.pathname==='/api/admin/all'&&method==='GET'){
         const [t,p]=await Promise.all([
           env.PUBLIC_DB.prepare('SELECT id,locality,number,geometry,published,updated_at FROM territories ORDER BY locality,number LIMIT 2000').all(),
