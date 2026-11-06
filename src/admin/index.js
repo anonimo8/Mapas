@@ -20,7 +20,35 @@ function normalizeTerritory(body){
   if(ring[0][0]!==ring.at(-1)[0]||ring[0][1]!==ring.at(-1)[1]) throw Error('El contorno debe estar cerrado.');
   if(new Set(ring.slice(0,-1).map(x=>x.join(','))).size<3) throw Error('El polígono debe tener tres vértices diferentes.');
   const published=body.published===true?1:0;
-  return {number,locality,geometry:JSON.stringify({type:'Polygon',coordinates:ring}),published};
+  return {number,locality,geometry:JSON.stringify({type:'Polygon',coordinates:[ring]}),published};
+}
+// Reparar un formato generado por versiones previas: GeoJSON Polygon
+// necesita `coordinates: [anillo]`, pero se guardó `coordinates: anillo`.
+// Solo cambiamos registros que coincidan exactamente con ese fallo.
+function repairLegacyPolygon(raw){
+  let old;
+  try{old=JSON.parse(raw);}catch(_){return null;}
+  if(old?.type!=='Polygon'||!Array.isArray(old.coordinates)||!Array.isArray(old.coordinates[0]))return null;
+  const first=old.coordinates[0];
+  // Formato incorrecto: cada coordenada es un par [longitud,latitud].
+  if(first.length!==2||!first.every(Number.isFinite))return null;
+  try{
+    return normalizeTerritory({number:1,locality:'Lambayeque',geometry:{type:'Polygon',coordinates:[old.coordinates]},published:false}).geometry;
+  }catch(_){return null;}
+}
+async function repairLegacyTerritories(env){
+  const rows=await env.PUBLIC_DB.prepare('SELECT id,geometry,published FROM territories LIMIT 2000').all();
+  let repaired=0, publishedRepaired=false;
+  for(const t of rows.results||[]){
+    const geometry=repairLegacyPolygon(t.geometry);
+    if(!geometry)continue;
+    await env.PUBLIC_DB.prepare('UPDATE territories SET geometry=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')
+      .bind(geometry,t.id).run();
+    repaired++;
+    if(t.published)publishedRepaired=true;
+  }
+  if(publishedRepaired)await broadcast(env);
+  return repaired;
 }
 async function broadcast(env){
   try{await env.LIVE.getByName('mapa-publico').fetch('https://internal/broadcast',{method:'POST'});}catch(_){/* Permite reintento mediante recarga del mapa. */}
@@ -96,7 +124,8 @@ export default {
             .bind(t.id,value.locality,value.number,value.geometry).run();
           created++;
         }
-        return send({ok:true,created,existing,warning:'Estos contornos son aproximaciones iniciales. Edita y verifica los límites con las imágenes de referencia antes de publicarlos.'});
+        const repaired=await repairLegacyTerritories(env);
+        return send({ok:true,created,existing,repaired,warning:'Se corrigió el formato GeoJSON de los contornos antiguos. Los límites siguen siendo borradores aproximados: revísalos antes de publicarlos.'});
       }
       if(url.pathname==='/api/admin/all'&&method==='GET'){
         const [t,p]=await Promise.all([
