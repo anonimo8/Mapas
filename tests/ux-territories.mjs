@@ -15,10 +15,12 @@ assert.ok(!pub.includes('circleMarker'),'La vista pública no debe mostrar punto
 assert.ok(pub.includes('/api/public-summary'),'El contador público debe usar el agregado de solo lectura');
 const publicHTML=await readFile(new URL('../public/index.html',import.meta.url),'utf8');
 assert.ok(publicHTML.includes('id="deafCount"'),'Contador en una esquina del mapa');
-assert.ok(!publicHTML.includes('class="sidebar"')&&!publicHTML.includes('href="/editar"'),'Sin barra lateral ni botón público de edición');
+assert.ok(!publicHTML.includes('class="sidebar"')&&publicHTML.includes('class="admin-entry"')&&publicHTML.includes('href="/editar"'),'Acceso discreto y protegido a administración, sin barra lateral');
 const html=await readFile(new URL('../src/admin/original-admin.html',import.meta.url),'utf8');
 for(const id of ['undoChange','redoChange','editSelected','activeMapLabel'])assert.ok(html.includes(`id="${id}"`),id);
 assert.ok(html.includes('map-shell')&&html.includes('order:0'),'El mapa debe ir primero en móvil');
+assert.ok(html.includes('id="importReferenceTerritories"')&&html.includes('id="publicationOverview"'),'Recuperación de contornos y estado de publicación en el editor');
+assert.ok(html.includes('publication.textContent=t.published?'),'Publicar y ocultar cada territorio de forma individual');
 const auth=await readFile(new URL('../src/auth.js',import.meta.url),'utf8');
 assert.ok(auth.includes("new URLSearchParams(location.search).get('territorio')"),'El login debe conservar la selección');
 console.log('PASS: paleta, polígonos sombreados, etiquetas, privacidad pública, editor e historial.');

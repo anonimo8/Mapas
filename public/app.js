@@ -54,7 +54,7 @@ function renderTerritories(territories){
         animate:false
       });
     }
-  }else setNotice('No hay territorios publicados todavía.');
+  }else setNotice('No hay territorios publicados. Abre Administración para revisar y publicar los contornos guardados.');
 }
 async function updateTerritories(){
   try{

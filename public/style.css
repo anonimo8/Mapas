@@ -42,3 +42,10 @@ html,body{width:100%;height:100%;padding:0;margin:0;overflow:hidden}
   .map-notice{font-size:11px}
 }
 @media print{.community-summary{top:10mm;right:10mm;box-shadow:none;border:1px solid #c9d0c4}.map-notice,.leaflet-control-zoom{display:none!important}}
+
+/* Acceso al editor: discreto, pero siempre localizable y táctil. */
+.admin-entry{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:620;display:inline-flex;align-items:center;gap:7px;min-height:37px;padding:8px 11px;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.01em;color:#546b5e;border-radius:11px;border:1px solid #d9e0d8;background:rgba(255,253,249,.90);box-shadow:0 5px 20px rgba(26,51,41,.11);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background .18s,transform .18s}
+.admin-entry:hover{background:#fffdf8;transform:translateY(-1px);color:#1a5341}
+.admin-entry:focus-visible{outline:3px solid #78a991;outline-offset:3px}
+@media(max-width:600px){.admin-entry{bottom:calc(23px + env(safe-area-inset-bottom,0px));left:9px;min-height:36px;padding:9px}.admin-entry span{display:none}}
+@media print{.admin-entry{display:none!important}}

@@ -74,7 +74,12 @@ document.getElementById('login').addEventListener('submit',async e=>{e.preventDe
 export async function handleAuthRoute(request,env){
   const url=new URL(request.url),method=request.method,p=url.pathname;
   if(p==='/acceso'&&method==='GET'){
-    if(!configured(env)) return new Response('<!doctype html><html lang="es"><meta charset="utf-8"><h1>Falta configurar el editor</h1><p>Configura PRIVATE_DB, ADMIN_PASSWORD y ADMIN_SESSION_SECRET en Cloudflare. Revisa INSTALACION_UNICA.md.</p><a href="/">Volver al mapa</a></html>',{status:503,headers:authHeader});
+    if(!configured(env)) {
+      const pending=[!env.PRIVATE_DB?'PRIVATE_DB':null,String(env.ADMIN_PASSWORD||'').length<12?'ADMIN_PASSWORD':null,sessionSecret(env).length<32?'ADMIN_SESSION_SECRET':null].filter(Boolean);
+      const safePending=pending.join(', ');
+      const page=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Configurar administración</title><style>body{background:#f7f7f1;color:#1e4538;font:16px system-ui,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center}main{background:#fffefa;border:1px solid #dbe7db;border-radius:18px;padding:30px;max-width:460px;margin:18px;box-shadow:0 12px 38px #193b2913}h1{margin:0 0 12px;font-size:25px}p{line-height:1.6;color:#50675a}code{display:block;background:#f2f5ee;padding:12px;border-radius:8px;word-break:break-word;color:#164e3d}a{color:#165d44;font-weight:700}</style></head><body><main><h1>Falta configurar el editor</h1><p>El acceso privado necesita estos ajustes de Cloudflare:</p><code>${safePending}</code><p>Abre <b>Workers & Pages → mapas → Settings → Variables and Secrets / Bindings</b>. No pegues contraseñas aquí ni las publiques en GitHub.</p><a href="/">← Volver al mapa</a></main></body></html>`;
+      return new Response(page,{status:503,headers:authHeader});
+    }
     if(await hasAdminSession(request,env)) return Response.redirect(url.origin+'/editar'+(url.searchParams.has('territorio')?'?territorio='+encodeURIComponent(url.searchParams.get('territorio')):''),302);
     return new Response(loginHtml,{headers:authHeader});
   }

@@ -33,6 +33,12 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
 .editor-help{font-size:11px;color:#6e8174;line-height:1.6}.unsaved-tip{font-size:11px;color:#7b6643;margin-top:7px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .leaflet-container{background:#e5ebe3}.leaflet-draw-toolbar,.leaflet-bar{border-radius:12px!important;overflow:hidden;box-shadow:0 5px 21px #143c3022!important}.leaflet-control-zoom a{border-radius:0!important}
 .territory-label-admin{background:#fffdfa;border:2px solid var(--territory-color);border-radius:10px;color:var(--territory-color);font-weight:900;padding:4px 7px;box-shadow:0 3px 10px #20352819}.leaflet-tooltip.territory-label-admin:before{display:none}
+.publish-panel{border:1px solid #e0e7da;background:#f3f7ef;border-radius:15px;padding:13px 14px;margin:13px 0 16px}
+.publish-status{font-size:12px;font-weight:800;color:#234f3d;line-height:1.5}
+.publish-panel .small{margin:8px 0 10px}.publish-panel button{margin:3px 0 4px}
+.list-publication{margin:0 4px 0 0;border:1px solid #a9d0b7;background:#e8f3e9;color:#216646;border-radius:9px;padding:9px 10px;min-height:36px;font-size:11px;font-weight:800;white-space:nowrap}
+.list-publication.is-published{background:#f8f1e8;color:#8a6a43;border-color:#e7d8c2}
+.list-publication:disabled{opacity:.55}
 @media(max-width:860px){
  html,body{height:auto;min-height:100%;overflow-x:hidden}.bar{height:58px;padding:0 12px;position:relative;z-index:800}.bar b{font-size:14px}.bar small{font-size:10px}.brand-glyph{height:32px;width:32px;font-size:20px}.header-actions{gap:5px}.header-link,.logout-btn{font-size:10px;padding:7px 8px}
  .app{display:flex;flex-direction:column;height:auto;min-height:calc(100dvh - 58px)}.map-shell{order:0;flex:none;height:64dvh;min-height:360px;max-height:700px;width:100%}aside{order:1;max-height:none;height:auto;overflow:visible;width:100%;padding:20px 17px 45px;border-right:0;border-top:1px solid var(--border)}
@@ -65,7 +71,14 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
   <p class="small">El PDF toma el <b>encuadre actualmente visible</b> del mapa; haz zoom y mueve la vista para elegir el recorte. Es una ficha privada, con los puntos H/M de ese territorio.</p>
   <div id="territoryStats" class="stat-line">Selecciona un territorio para ver su resumen privado.</div>
   <div id="status" class="status" aria-live="polite"></div>
-  <section class="section" id="territoriesSection"><div class="section-heading"><h3>Territorios guardados <span id="totalTerritories">0</span></h3></div><div id="territoryList" class="list"></div></section>
+  <section class="section" id="territoriesSection"><div class="section-heading"><h3>Territorios guardados <span id="totalTerritories">0</span></h3></div>
+    <div class="publish-panel" role="region" aria-label="Estado de publicación">
+      <div class="publish-status" id="publicationOverview" aria-live="polite">Revisando territorios…</div>
+      <p class="small" id="publicationHelp">La vista pública muestra solamente contornos marcados como «Publicado». Si faltan divisiones, revisa cada territorio y pulsa «Publicar».</p>
+      <button class="btn alt btn-full" id="importReferenceTerritories" type="button">↻ Recuperar los 11 contornos de referencia</button>
+      <p class="small" id="importHelp">Solo si faltan divisiones: agrega contornos de referencia sin reemplazar los existentes. Se guardan como borradores para revisar.</p>
+    </div>
+    <div id="territoryList" class="list"></div></section>
   <section class="section private-section">
     <div class="privacy-tag">Solo administrador · D1 privada</div>
     <h3>Puntos permanentes: hombres y mujeres</h3>
@@ -204,6 +217,14 @@ async function api(path,opts={}){
  let v;try{v=await r.json();}catch(_){throw Error('Respuesta no válida del servidor.');}
  if(!r.ok)throw Error(v.error||'Error del servidor.');return v;
 }
+$('importReferenceTerritories').addEventListener('click',async()=>{
+  if(!confirm('¿Recuperar los 11 contornos geográficos de referencia? No se cambiará ningún territorio existente. Los nuevos límites son aproximados y quedarán SIN publicar hasta verificarlos.'))return;
+  const button=$('importReferenceTerritories');button.disabled=true;
+  try{const r=await api('/api/admin/import-lambayeque-11',{method:'POST',body:'{}'});
+    await reload();setStatus(`Contornos recuperados: ${r.created} nuevos, ${r.existing} existentes; ${r.repaired} geometrías antiguas reparadas. Revisa los límites y publica cada territorio aprobado.`);
+  }catch(e){setStatus('No fue posible recuperar los contornos: '+e.message);}
+  finally{button.disabled=false;}
+});
 async function reload(){try{
  const data=await api('/api/admin/all');territories=data.territories;points=data.points;
  stopIndividualEditing();fg.clearLayers();pointMarkers.clearLayers();
@@ -221,6 +242,11 @@ async function reload(){try{
  }catch(e){setStatus(e.message);}}
 function renderLists(){
  $('totalTerritories').textContent=String(territories.length);$('pendingCount').textContent='('+points.filter(x=>x.status==='pending').length+' pendientes)';
+ const totalPublished=territories.filter(t=>!!t.published).length;
+ $('publicationOverview').textContent=`${totalPublished} publicados · ${territories.length-totalPublished} borradores · ${territories.length} guardados`;
+ $('publicationHelp').textContent=territories.length===0?'No hay territorios guardados en esta base D1. Puedes recuperar los 11 contornos preliminares sin sobrescribir otros datos.':totalPublished===0?'Los territorios existen, pero ninguno está publicado. Revisa sus límites y usa «Publicar» junto a cada división para verla en el mapa público.':`${totalPublished} contornos aparecen en la vista pública. Los borradores siguen ocultos hasta que los apruebes.`;
+ $('importReferenceTerritories').hidden=territories.length>=11;
+ $('importHelp').hidden=territories.length>=11;
  $('territoryList').replaceChildren();
  for(const t of territories){
   const row=document.createElement('div');row.className='territory-row'+(t.id===selectedId?' active':'');row.style.setProperty('--territory-color',territoryColor(t));
@@ -231,7 +257,18 @@ function renderLists(){
   b.addEventListener('click',()=>selectTerritory(t.id,true));
   const edit=document.createElement('button');edit.className='list-edit';edit.type='button';edit.textContent='✎ Editar';edit.setAttribute('aria-label',`Editar territorio ${t.number}`);
   edit.addEventListener('click',()=>editIndividualTerritory(t.id));
-  row.append(swatch,b,edit);$('territoryList').append(row);
+  const publication=document.createElement('button');publication.type='button';publication.className='list-publication'+(t.published?' is-published':'');
+  publication.textContent=t.published?'Ocultar':'Publicar';
+  publication.setAttribute('aria-label',`${t.published?'Ocultar':'Publicar'} territorio ${t.number}`);
+  publication.addEventListener('click',async()=>{
+    const next=!t.published;
+    if(!confirm(next?`¿Has revisado el contorno del territorio #${t.number} y confirmas que se puede mostrar públicamente sin revelar información sensible?`:`¿Ocultar el territorio #${t.number} de la vista pública?`))return;
+    publication.disabled=true;
+    try{await api('/api/admin/territories/'+encodeURIComponent(t.id),{method:'PUT',body:JSON.stringify({number:t.number,locality:t.locality,geometry:t.geometry,published:next})});
+      await reload();setStatus(`Territorio #${t.number} ${next?'publicado':'ocultado'} correctamente. La vista pública se actualizará automáticamente.`);
+    }catch(e){setStatus('No se pudo cambiar la publicación: '+e.message);publication.disabled=false;}
+  });
+  row.append(swatch,b,edit,publication);$('territoryList').append(row);
  }
  $('pointList').replaceChildren();
  for(const p of [...points].sort((a,b)=>({pending:0,approved:1,rejected:2}[a.status]-{pending:0,approved:1,rejected:2}[b.status]))){
