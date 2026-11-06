@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node tests/smoke.mjs && node tests/auth-session.mjs && node tests/private-features.mjs && node tests/pdf-export-test.mjs && node tests/check-admin-ui.mjs && node tests/ux-territories.mjs",
+    "test": "node tests/smoke.mjs && node tests/auth-session.mjs && node tests/private-features.mjs && node tests/pdf-export-test.mjs && node tests/check-admin-ui.mjs && node tests/ux-territories.mjs && node tests/drag-territories.mjs",
     "check": "node --check src/index.js && node --check src/auth.js && node --check public/app.js && node --check src/admin/index.js && node --check src/admin/private-points.js && node --check src/admin/export-pdf.js"
   },
   "devDependencies": {

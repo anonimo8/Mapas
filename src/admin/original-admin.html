@@ -37,6 +37,9 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
 .map-quicktools button{border:1px solid #dfe9de;box-shadow:0 6px 23px #193a2a24;background:#fffdf8;min-height:42px;border-radius:12px;color:#2a5c48;font-size:12px;font-weight:800;padding:0 13px;white-space:nowrap}.map-quicktools button:disabled{opacity:.48;cursor:not-allowed}.map-quicktools button:hover:not(:disabled){background:#eaf3ea}.map-quicktools .editing-now{background:#d3eada;color:#17523b;border-color:#77b58f}
 .map-selected-label{position:absolute;top:16px;left:54px;z-index:499;border:1px solid #e2eadd;border-radius:20px;background:#fffdf8ec;box-shadow:0 5px 18px #193a2a14;font-size:12px;font-weight:700;color:#315a46;padding:9px 13px;pointer-events:none;max-width:calc(100% - 120px)}
 .editor-help{font-size:11px;color:#6e8174;line-height:1.6}.unsaved-tip{font-size:11px;color:#7b6643;margin-top:7px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+/* La forma completa se arrastra sólo mientras está en modo Editar. */
+.leaflet-interactive.territory-can-drag{cursor:grab!important;touch-action:none}
+.leaflet-interactive.territory-being-dragged{cursor:grabbing!important}
 .leaflet-container{background:#e5ebe3}.leaflet-draw-toolbar,.leaflet-bar{border-radius:12px!important;overflow:hidden;box-shadow:0 5px 21px #143c3022!important}.leaflet-control-zoom a{border-radius:0!important}
 .territory-label-admin{background:#fffdfa;border:2px solid var(--territory-color);border-radius:10px;color:var(--territory-color);font-weight:900;padding:4px 7px;box-shadow:0 3px 10px #20352819}.leaflet-tooltip.territory-label-admin:before{display:none}
 .publish-panel{border:1px solid #e0e7da;background:#f3f7ef;border-radius:15px;padding:13px 14px;margin:13px 0 16px}
@@ -61,12 +64,13 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
   <h1 class="panel-title">Diseña tu territorio.</h1>
   <p class="intro">Selecciona un territorio, edita su contorno en el mapa y guarda los cambios.</p>
   <details class="details-help"><summary>Consejos de edición y privacidad</summary>
-    <p class="intro">Dibuja polígonos o rectángulos. Para cambiar límites, selecciona «Editar» junto a un territorio; mueve los vértices y guarda. Evita superponer territorios.</p>
+    <p class="intro">Dibuja polígonos o rectángulos. Para mover un cuadro completo, pulsa «Editar», mantén el mouse presionado dentro del contorno y arrástralo. Los controles blancos siguen permitiendo cambiar sus límites. Después pulsa Guardar. Evita superponer territorios.</p>
     <div class="warn"><b>Separación de datos:</b> los contornos geográficos se guardan en D1 pública. Los puntos de personas y su sexo se guardan únicamente en la D1 privada. No compartas PDFs privados.</div>
   </details>
   <label for="locality">Localidad del territorio</label><select id="locality"><option>Lambayeque</option><option>Mochumí</option><option>Túcume</option><option>Íllimo</option><option>Pacora</option><option>Mórrope</option></select>
   <label for="number">Número único de territorio (global)</label><input id="number" type="number" min="1" max="999999" placeholder="Ej. 1">
   <p class="small" id="selectedText">Dibuja un nuevo contorno o pulsa «Editar» en un territorio guardado.</p>
+  <p class="editor-help">Para desplazar el cuadro entero, activa «Editar» y arrástralo desde su interior con el mouse presionado. Para cambiar su tamaño, usa los controles blancos.</p>
   <p class="editor-help">↶ Deshacer <kbd>Ctrl+Z</kbd> · ↷ Rehacer <kbd>Ctrl+Y</kbd> (también ⌘ en Mac). El historial funciona antes de guardar.</p>
   <div class="checkbox-row"><input id="publish" type="checkbox"><label for="publish" style="margin:0">Publicar en el mapa público<br><small>Solo después de verificar que el contorno no revela información sensible.</small></label></div>
   <div class="row"><button id="saveTerritory" class="btn">Guardar territorio</button><button id="resetTerritory" class="btn alt">Nuevo</button><button id="deleteTerritory" class="btn danger" disabled>Eliminar</button></div>
@@ -123,7 +127,7 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
 <div class="map-quicktools" role="toolbar" aria-label="Historial y edición del mapa">
 <button id="undoChange" type="button" title="Deshacer (Ctrl+Z)" aria-label="Deshacer cambios sin guardar" disabled>↶ Deshacer</button>
 <button id="redoChange" type="button" title="Rehacer (Ctrl+Y)" aria-label="Rehacer cambios sin guardar" disabled>↷ Rehacer</button>
-<button id="editSelected" type="button" title="Editar vértices del territorio seleccionado" disabled>✎ Editar</button>
+<button id="editSelected" type="button" title="Arrastrar el contorno completo o editar sus vértices" disabled>✎ Editar</button>
 </div></div></div>
 <script src="/territory-colors.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script>
@@ -145,15 +149,106 @@ let privateReady=false;
 let history=[],historyPosition=-1,restoringHistory=false,historyTimer=null,editingLayer=null,draftSerial=0;
 const deepLinkedTerritory=new URLSearchParams(location.search).get('territorio');
 let deepLinkApplied=false;
+let suppressTerritoryClickUntil=0;
 
 const draw=new L.Control.Draw({position:'topright',draw:{polygon:{allowIntersection:false,showArea:true,shapeOptions:{color:'#157457'}},polyline:false,rectangle:{shapeOptions:{color:'#157457'}},circle:false,marker:false,circlemarker:false},edit:{featureGroup:fg,remove:false}});map.addControl(draw);
 const setStatus=(message)=>{$('status').textContent=message;};
+// El desplazamiento afecta sólo al dibujo en memoria hasta pulsar «Guardar territorio».
+// No transforma ni migra los registros que ya están guardados en D1.
+function canDragTerritory(layer){
+ const globalEdit=draw?._toolbars?.edit?._modes?.edit?.handler;
+ return !placingPoint&&!privatePlacing&&(editingLayer===layer||!!(globalEdit?.enabled?.()&&layer.editing?.enabled?.()));
+}
+function refreshTerritoryDragCursors(){
+ fg.eachLayer(layer=>layer.getElement()?.classList.toggle('territory-can-drag',canDragTerritory(layer)));
+}
+function moveLatLngTree(points,dx,dy){
+ return points.map(point=>{
+  if(Array.isArray(point))return moveLatLngTree(point,dx,dy);
+  const pixel=map.latLngToLayerPoint(point);
+  return map.layerPointToLatLng(L.point(pixel.x+dx,pixel.y+dy));
+ });
+}
+function refreshEditingHandles(layer){
+ const editor=layer.editing;
+ if(!editor?.enabled?.())return;
+ // Leaflet.Draw dibuja por separado los tiradores de edición. Tras mover
+ // la figura, se regeneran a partir de su NUEVA geometría.
+ editor.disable();editor.enable();
+ refreshTerritoryDragCursors();
+}
+function startTerritoryDrag(layer,event){
+ if(event.button!==0||event.isPrimary===false||!canDragTerritory(layer))return;
+ const path=layer.getElement();if(!path)return;
+ const pointerId=event.pointerId;
+ const originX=event.clientX,originY=event.clientY;
+ const startingPoints=layer.getLatLngs();
+ const wasMapDraggable=map.dragging.enabled();
+ let moved=false,finished=false;
+ event.preventDefault();event.stopPropagation();
+ if(wasMapDraggable)map.dragging.disable();
+ path.classList.add('territory-being-dragged');
+ try{path.setPointerCapture(pointerId);}catch(_){/* Captura opcional */}
+ function apply(ev){
+  const dx=ev.clientX-originX,dy=ev.clientY-originY;
+  if(!moved&&Math.hypot(dx,dy)<3)return;
+  moved=true;
+  layer.setLatLngs(moveLatLngTree(startingPoints,dx,dy));
+  // Los 8 controles de los rectángulos se actualizan durante el arrastre.
+  if(layer.editing?._moveMarker&&layer.getBounds){
+   layer.editing._moveMarker.setLatLng(layer.getBounds().getCenter());
+   layer.editing._repositionCornerMarkers?.();
+  }
+ }
+ function cleanup(){
+  document.removeEventListener('pointermove',onMove);
+  document.removeEventListener('pointerup',onUp);
+  document.removeEventListener('pointercancel',onCancel);
+  window.removeEventListener('blur',onBlur);
+  try{if(path.hasPointerCapture(pointerId))path.releasePointerCapture(pointerId);}catch(_){}
+  path.classList.remove('territory-being-dragged');
+  if(wasMapDraggable)map.dragging.enable();
+ }
+ function finish(ev,cancel=false){
+  if(finished||(ev&&ev.pointerId!==pointerId))return;
+  finished=true;
+  if(!cancel&&ev)apply(ev);
+  cleanup();
+  if(cancel){if(moved){layer.setLatLngs(startingPoints);refreshEditingHandles(layer);}return;}
+  if(!moved)return;
+  suppressTerritoryClickUntil=Date.now()+450;
+  refreshEditingHandles(layer);
+  layer.edited=true;
+  layer.fire('edit');
+  recordHistory();
+  setStatus('Contorno desplazado. Pulsa «Guardar territorio» para conservar la nueva posición.');
+ }
+ function onMove(ev){if(ev.pointerId!==pointerId)return;ev.preventDefault();apply(ev);}
+ function onUp(ev){finish(ev);}
+ function onCancel(ev){finish(ev,true);}
+ function onBlur(){finish(null,true);}
+ document.addEventListener('pointermove',onMove,{passive:false});
+ document.addEventListener('pointerup',onUp);
+ document.addEventListener('pointercancel',onCancel);
+ window.addEventListener('blur',onBlur);
+}
+function enableTerritoryDrag(layer){
+ layer.on('add',()=>{
+  const path=layer.getElement();
+  if(!path||path._territoryDragBound)return;
+  path._territoryDragBound=true;
+  path.addEventListener('pointerdown',event=>startTerritoryDrag(layer,event));
+  path.classList.toggle('territory-can-drag',canDragTerritory(layer));
+ });
+}
+map.on('draw:editstart draw:editstop',()=>setTimeout(refreshTerritoryDragCursors,0));
 const layerFor=(t)=>{const x=L.geoJSON({type:'Feature',geometry:t.geometry,properties:{}}).getLayers()[0];
  const color=territoryColor(t);x.setStyle({color,fillColor:color,fillOpacity:t.published?.22:.13,weight:3,opacity:1,dashArray:t.published?null:'7 5'});
  const tag=document.createElement('span');tag.textContent='#'+t.number;tag.style.setProperty('--territory-color',color);
  x.bindTooltip(tag,{permanent:true,direction:'center',className:'territory-label-admin'});
- x.on('click',e=>{if(privatePlacing||placingPoint){placeOnMap(e.latlng);L.DomEvent.stopPropagation(e);return;}selectTerritory(t.id);});return x;};
-const layerForDraft=(geometry,key)=>{const layer=L.geoJSON({type:'Feature',geometry,properties:{}}).getLayers()[0];layer._draftId=key;layer.setStyle({color:'#437E6F',fillColor:'#437E6F',fillOpacity:.18,weight:3,dashArray:'6 4'});layer.on('click',()=>{selectedId=null;selectedLayer=layer;updateTerritoryControls();});return layer;};
+ enableTerritoryDrag(x);
+ x.on('click',e=>{if(Date.now()<suppressTerritoryClickUntil){L.DomEvent.stopPropagation(e);return;}if(privatePlacing||placingPoint){placeOnMap(e.latlng);L.DomEvent.stopPropagation(e);return;}selectTerritory(t.id);});return x;};
+const layerForDraft=(geometry,key)=>{const layer=L.geoJSON({type:'Feature',geometry,properties:{}}).getLayers()[0];layer._draftId=key;enableTerritoryDrag(layer);layer.setStyle({color:'#437E6F',fillColor:'#437E6F',fillOpacity:.18,weight:3,dashArray:'6 4'});layer.on('click',()=>{if(Date.now()<suppressTerritoryClickUntil)return;selectedId=null;selectedLayer=layer;updateTerritoryControls();});return layer;};
 function updateTerritoryControls(){
  const enabled=!!selectedLayer;const saved=!!selectedId;
  $('deleteTerritory').disabled=!saved;$('fitTerritory').disabled=!enabled;$('exportTerritoryPdf').disabled=!saved;
@@ -163,7 +258,7 @@ function updateTerritoryControls(){
  $('activeMapLabel').style.color=t?territoryColor(t):'#315a46';
  $('editSelected').textContent=editingLayer===selectedLayer?'✓ Terminar edición':'✎ Editar';
  $('editSelected').classList.toggle('editing-now',editingLayer===selectedLayer);
- updateTerritoryStats();
+ refreshTerritoryDragCursors();updateTerritoryStats();
 }
 function stopIndividualEditing(){
  if(editingLayer?.editing?.enabled())editingLayer.editing.disable();
@@ -185,7 +280,7 @@ function editIndividualTerritory(id){
  if(!selectedLayer.editing && L.Edit?.Poly)selectedLayer.editing=new L.Edit.Poly(selectedLayer);
  if(!selectedLayer.editing){setStatus('No se puede editar este contorno.');return;}
  editingLayer=selectedLayer;editingLayer.editing.enable();updateTerritoryControls();revealMapOnMobile();
- setStatus('Arrastra los vértices del territorio y pulsa Guardar al terminar.');
+ setStatus('Mantén presionado dentro del contorno para moverlo completo; usa los controles blancos para ajustar vértices o tamaño. Después pulsa Guardar.');
 }
 function captureHistory(){return {
  layers:fg.getLayers().map(l=>({key:l._territoryId||l._draftId||('draft-'+(++draftSerial)),id:l._territoryId||null,geometry:l.toGeoJSON().geometry})),
@@ -297,7 +392,7 @@ function selectTerritory(id,pan=true){
  if(editingLayer && editingLayer!==fg.getLayers().find(x=>x._territoryId===id))stopIndividualEditing();
  selectedId=id;selectedLayer=fg.getLayers().find(x=>x._territoryId===id)||null;
  $('locality').value=t.locality;$('number').value=t.number;$('publish').checked=!!t.published;
- updateTerritoryControls();$('selectedText').textContent=`Editando territorio #${t.number} (${t.locality}). Cambia vértices con el control de edición, luego guarda.`;
+ updateTerritoryControls();$('selectedText').textContent=`Territorio #${t.number} (${t.locality}). Pulsa Editar y arrastra el interior para moverlo completo, o ajusta sus vértices; luego guarda.`;
  if(pan&&selectedLayer){map.fitBounds(selectedLayer.getBounds(),{padding:[40,40],maxZoom:17});revealMapOnMobile();}renderLists();
 }
 function resetTerritory(){
@@ -310,7 +405,7 @@ function resetTerritory(){
 map.on(L.Draw.Event.CREATED,e=>{
  if(!['polygon','rectangle'].includes(e.layerType))return;
  if(selectedLayer&&!selectedId)fg.removeLayer(selectedLayer);
- resetTerritory();selectedLayer=e.layer;selectedLayer._draftId='draft-'+(++draftSerial);selectedLayer.setStyle({color:'#437E6F',fillColor:'#437E6F',fillOpacity:.18,weight:3});fg.addLayer(selectedLayer);updateTerritoryControls();
+ resetTerritory();selectedLayer=e.layer;enableTerritoryDrag(selectedLayer);selectedLayer._draftId='draft-'+(++draftSerial);selectedLayer.setStyle({color:'#437E6F',fillColor:'#437E6F',fillOpacity:.18,weight:3});fg.addLayer(selectedLayer);updateTerritoryControls();
  $('selectedText').textContent='Nuevo contorno dibujado. Indica localidad y número; se guardará sin publicar por defecto.';
  setStatus('Nuevo polígono listo para guardar.');recordHistory();
 });
