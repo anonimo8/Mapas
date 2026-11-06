@@ -1,14 +1,23 @@
 # Territorios Lambayeque · V3 — una sola aplicación
 
-**Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa se consulta sin iniciar sesión. En el mismo sitio, el botón **Editar mapa** abre un editor protegido por contraseña.
+**Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa público se consulta sin iniciar sesión y muestra únicamente las divisiones numeradas con sombreado suave y el total agregado de personas sordas registradas. El editor protegido se abre escribiendo `/editar` en la misma dirección web.
 
-## Mejoras de interfaz (5 de noviembre de 2026)
+## Actualización de vista pública (5 de noviembre de 2026)
+
+- **Solo mapa:** toda la pantalla para los territorios, sin barra lateral, puntos visibles, buscadores ni botones de edición.
+- **Territorios discretos:** polígonos con relleno de color al 13 %, bordes suaves y números centrales.
+- **Contador en la esquina:** total general agregado de personas sordas registradas (sin desglose por territorio, coordenadas, sexo o fichas individuales). Los registros de 1–4 se muestran como «Menos de 5» por confidencialidad. No muestra un número inventado si PRIVATE_DB no está disponible.
+- **Panel administrativo intacto:** disponible en `/editar`. No se requieren migraciones de bases de datos.
+
+Ver [CAMBIOS_VISTA_PUBLICA_2026-11-05.md](CAMBIOS_VISTA_PUBLICA_2026-11-05.md).
+
+## Mejoras anteriores del editor (5 de noviembre de 2026)
 
 - Cada territorio tiene su **propio color**, idéntico en la vista pública, en el editor y en la lista. Los colores se asignan automáticamente según el número de territorio, sin cambios de tablas D1.
-- La lista pública y la ventana emergente de cada territorio incluyen **Editar**, además del acceso general de la cabecera. El login conserva el territorio seleccionado.
+- El panel administrativo incluye **Editar** por territorio, además de las herramientas globales. Se conserva el acceso profundo a `/editar?territorio=<UUID>` y el login conserva la selección.
 - El editor incorpora **edición de vértices por territorio**, junto con el modo de edición global previo. Pulsa «Editar» en la ficha de un territorio; termina de ajustar los vértices y pulsa **Guardar territorio**.
 - Historial de cambios **antes de guardar**: botones Deshacer/Rehacer y teclas `Ctrl+Z`, `Ctrl+Y`, `⌘+Z`, `⌘+Shift+Z` cuando el foco no está en un campo de texto. Los cambios ya guardados en D1 requieren otra edición, no son revertidos por el historial local.
-- En celular el **mapa se muestra inmediatamente bajo la cabecera**, ocupa la mayor parte de la primera pantalla y el panel completo queda debajo. La vista pública mantiene los filtros en un menú deslizable.
+- En celular la **vista pública es el mapa a pantalla completa**. En `/editar`, el mapa aparece antes que el panel de herramientas.
 - Rediseño orgánico/premium: fondos cálidos, mejor jerarquía visual, tarjetas individuales, contrastes, controles táctiles y accesibilidad de teclado.
 
 Consulta [CAMBIOS_UX_2026-11-05.md](CAMBIOS_UX_2026-11-05.md) para la lista de comprobación tras publicar.
@@ -20,7 +29,7 @@ Consulta [CAMBIOS_UX_2026-11-05.md](CAMBIOS_UX_2026-11-05.md) para la lista de c
 - Añadir, cambiar de posición y borrar marcadores permanentes de **hombre/mujer** exclusivamente dentro del editor protegido.
 - Asignar como máximo seis puntos privados por territorio (también pueden existir puntos sin asignar).
 - Encuadrar el mapa y descargar una ficha PDF con mapa y resumen privado para cada territorio.
-- Publicar contornos geográficos revisados y referencias que **no revelen** información confidencial. Los datos H/M nunca se envían por las APIs públicas.
+- Publicar contornos geográficos revisados. Las fichas H/M, coordenadas, sexo y notas nunca se envían por las APIs públicas; solo se publica el total general agregado en `/api/public-summary` según el umbral de privacidad.
 - Ver en vivo los cambios autorizados usando WebSockets.
 
 **La opción pública de «Sugerir punto» ya no aparece**, por lo que Turnstile no hace falta para el flujo de trabajo del usuario. El código previo de aportes públicos sigue presente, pero sin botón público.

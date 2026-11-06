@@ -49,6 +49,19 @@ export default {
           points: p.results||[]
         });
       }
+      // Unicamente la cifra global: nunca se exponen coordenadas, sexo,
+      // identificadores ni contadores de territorios pequeños.
+      if (url.pathname === '/api/public-summary' && method === 'GET') {
+        if(!env.PRIVATE_DB) return json({status:'unavailable'},503);
+        try {
+          const total=await env.PRIVATE_DB.prepare('SELECT COUNT(*) AS total FROM private_person_points').first();
+          const n=Number(total?.total);
+          if(!Number.isSafeInteger(n) || n<0) return json({status:'unavailable'},503);
+          // Cuando el conjunto es muy pequeño no divulgar un número identificable.
+          if(n>0 && n<5) return json({status:'limited'});
+          return json({status:'ok',deafRegistered:n});
+        }catch(_){return json({status:'unavailable'},503);}
+      }
       if (url.pathname === '/api/live' && method === 'GET') {
         if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket') return error('Se requiere WebSocket.',426);
         return env.LIVE.getByName('mapa-publico').fetch(request);

@@ -14,7 +14,7 @@ Público, lectura         Sesión firmada obligatoria
  publicados               editables         y limitador de login
 ```
 
-El usuario no necesita dos proyectos ni dos direcciones de Cloudflare. El backend tiene rutas públicas y rutas autenticadas dentro del mismo Worker. Los datos sobre personas no se incluyen en `GET /api/data` ni en GeoJSON, HTML público, ni activos estáticos. La página de administración y el JS de exportación solo se sirven tras verificar la cookie firmada.
+El usuario no necesita dos proyectos ni dos direcciones de Cloudflare. El backend tiene rutas públicas y rutas autenticadas dentro del mismo Worker. Los datos individuales sobre personas no se incluyen en `GET /api/data` ni en GeoJSON, HTML público, ni activos estáticos. La ruta `/api/public-summary` devuelve **únicamente el total agregado de puntos privados registrados en toda la base**, sin desglose territorial: totales entre 1 y 4 se suprimen como «Menos de 5», y no se divulgan ubicaciones, sexo, identificadores o notas. Esta publicación agregada requiere autorización para el uso estadístico de la información. La página de administración y el JS de exportación solo se sirven tras verificar la cookie firmada.
 
 El ingreso de contraseña usa el secreto `ADMIN_PASSWORD`, y la sesión HMAC SHA-256 se firma con `ADMIN_SESSION_SECRET`, ambos secretos en Cloudflare, nunca en el repositorio. Hay una limitación de cinco contraseñas incorrectas cada 15 minutos por clave derivada de IP, con HMAC, guardada en la D1 privada. Se validan orígenes de operaciones, se usa cookie `Secure`, `HttpOnly`, `SameSite=Strict`, y las consultas son parametrizadas.
 

@@ -19,6 +19,19 @@ assert.equal(r.status,200);assert.deepEqual((await r.json()).coverage,['Lambayeq
 r=await worker.fetch(req('/api/health'),env,{});assert.equal(r.status,200);assert.equal((await r.json()).ok,true);
 r=await worker.fetch(req('/api/data'),env,{});
 assert.equal(r.status,200);assert.deepEqual(await r.json(),{territories:[],points:[]});
+// El contador público solo divulga un agregado; jamás coordenadas o fichas.
+const summaryEnv=(n)=>({...env,PRIVATE_DB:{prepare(sql){
+  assert.equal(sql,'SELECT COUNT(*) AS total FROM private_person_points');
+  return {first:async()=>({total:n})};
+}}});
+r=await worker.fetch(req('/api/public-summary'),summaryEnv(12),{});
+assert.equal(r.status,200);assert.deepEqual(await r.json(),{status:'ok',deafRegistered:12});
+r=await worker.fetch(req('/api/public-summary'),summaryEnv(3),{});
+assert.deepEqual(await r.json(),{status:'limited'});
+r=await worker.fetch(req('/api/public-summary'),summaryEnv(0),{});
+assert.deepEqual(await r.json(),{status:'ok',deafRegistered:0});
+r=await worker.fetch(req('/api/public-summary'),env,{});
+assert.equal(r.status,503);assert.deepEqual(await r.json(),{status:'unavailable'});
 r=await worker.fetch(req('/api/proposals',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}),env,{});
 assert.equal(r.status,503);
 r=await worker.fetch(req('/api/live'),env,{});assert.equal(r.status,426);
