@@ -16,8 +16,9 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 let territories=[],points=[],siteKey='',tokenWidget=null,pickMode=false,selectedLatLng=null,tempMarker=null,liveSocket=null;
 const territoryLayers=L.featureGroup().addTo(map), pointLayers=L.layerGroup().addTo(map);
 const territoryMap=new Map();
+const territoryColor=window.TerritoryPalette.territoryColor;
 const showHint=(text)=>{$('mapHint').textContent=text;};
-const closeMobile=()=>{$('sidebar').classList.remove('open');};
+const closeMobile=()=>{$('sidebar').classList.remove('open');$('mobileMenu').setAttribute('aria-expanded','false');};
 function makeEl(tag,cls,content){const el=document.createElement(tag);if(cls)el.className=cls;if(content!==undefined)el.textContent=content;return el;}
 function coordStr(ll){return `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`;}
 function fitTerritory(id){const layer=territoryMap.get(id);if(!layer)return;map.fitBounds(layer.getBounds(),{padding:[42,42],maxZoom:18});layer.getLayers()[0]?.openPopup();closeMobile();}
@@ -31,24 +32,28 @@ function render(){
   if(!visibleT.length)list.append(makeEl('p','empty','No hay territorios publicados en esta localidad.'));
   for(const t of visibleT){
     const layer=L.geoJSON({type:'Feature',geometry:t.geometry,properties:{}},{
-      style:{color:'#187b60',weight:3,fillColor:'#48a882',fillOpacity:.17},
+      style:{color:territoryColor(t),weight:3,fillColor:territoryColor(t),fillOpacity:.20,opacity:.96},
       onEachFeature:(_,l)=>{
-        const popup=makeEl('div');popup.append(makeEl('b','',`Territorio #${t.number}`),makeEl('p','',t.locality));
+        const popup=makeEl('div','territory-popup');popup.append(makeEl('b','',`Territorio #${t.number}`),makeEl('p','',t.locality));
+        const editLink=makeEl('a','popup-edit','✎ Editar este territorio');editLink.href='/editar?territorio='+encodeURIComponent(t.id);popup.append(editLink);
         const print=makeEl('button','', 'Imprimir vista');print.className='secondary-btn';print.style.cssText='padding:6px 12px;font-size:12px;';
         print.addEventListener('click',()=>{map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:17});setTimeout(()=>window.print(),400);});
         popup.append(print);l.bindPopup(popup);
-        const label=makeEl('span','territory-label',`#${t.number}`);
+        const label=makeEl('span','territory-label',`#${t.number}`);label.style.setProperty('--territory-color',territoryColor(t));
         l.bindTooltip(label,{permanent:true,direction:'center',className:'territory-tooltip'});
         l.on('click',()=>{if(pickMode)return;});
       }
     }).addTo(territoryLayers);
     territoryMap.set(t.id,layer);
-    const b=makeEl('button','territory-item');b.type='button';
-    b.append(makeEl('span','territory-number',String(t.number)));
-    const d=makeEl('div');d.append(makeEl('b','',`Territorio #${t.number}`),makeEl('small','',t.locality));
-    b.append(d,makeEl('span','item-arrow','›'));b.addEventListener('click',()=>fitTerritory(t.id));list.append(b);
+    const row=makeEl('div','territory-item');row.style.setProperty('--territory-color',territoryColor(t));
+    const view=makeEl('button','territory-view');view.type='button';view.setAttribute('aria-label',`Ver territorio ${t.number}`);
+    view.append(makeEl('span','territory-number',String(t.number)));
+    const d=makeEl('span','territory-copy');d.append(makeEl('b','',`Territorio #${t.number}`),makeEl('small','',t.locality));
+    view.append(d,makeEl('span','item-arrow','›'));view.addEventListener('click',()=>fitTerritory(t.id));
+    const edit=makeEl('a','territory-edit','Editar');edit.href='/editar?territorio='+encodeURIComponent(t.id);edit.setAttribute('aria-label',`Editar territorio ${t.number}`);
+    row.append(view,edit);list.append(row);
   }
-  const visibleP=points.filter(p=>(cat==='all'||p.category===cat) && (sel==='all'||Math.hypot(...[p.lat-locations[sel][0],p.lng-locations[sel][1]])<.08));
+  const visibleP=points.filter(p=>(cat==='all'||p.category===cat) && (sel==='all'||Math.hypot(p.lat-locations[sel][0],p.lng-locations[sel][1])<.08));
   // Los puntos se filtran por categoría; la proximidad local es solo un filtro visual aproximado.
   const pointList=$('pointsList');pointList.replaceChildren();$('countPoints').textContent=String(visibleP.length);
   if(!visibleP.length)pointList.append(makeEl('p','empty','No hay puntos aprobados en esta selección.'));
@@ -88,7 +93,7 @@ function connectLive(){
 }
 $('locality').addEventListener('change',()=>{const v=$('locality').value;if(v!=='all')map.setView(locations[v],14);render();closeMobile();});
 $('categoryFilter').addEventListener('change',render);
-$('mobileMenu').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
+$('mobileMenu').addEventListener('click',()=>{const open=$('sidebar').classList.toggle('open');$('mobileMenu').setAttribute('aria-expanded',String(open));});
 $('locateBtn').addEventListener('click',()=>map.locate({setView:true,maxZoom:17,enableHighAccuracy:true}));
 map.on('locationerror',()=>showHint('No se pudo obtener tu ubicación. Revisa el permiso del navegador.'));
 map.on('locationfound',e=>L.circleMarker(e.latlng,{radius:8,color:'#176e54',weight:3,fillColor:'#b5e6cf',fillOpacity:1}).addTo(map).bindPopup('Ubicación aproximada del dispositivo').openPopup());

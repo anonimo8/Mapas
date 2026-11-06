@@ -2,6 +2,17 @@
 
 **Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa se consulta sin iniciar sesión. En el mismo sitio, el botón **Editar mapa** abre un editor protegido por contraseña.
 
+## Mejoras de interfaz (5 de noviembre de 2026)
+
+- Cada territorio tiene su **propio color**, idéntico en la vista pública, en el editor y en la lista. Los colores se asignan automáticamente según el número de territorio, sin cambios de tablas D1.
+- La lista pública y la ventana emergente de cada territorio incluyen **Editar**, además del acceso general de la cabecera. El login conserva el territorio seleccionado.
+- El editor incorpora **edición de vértices por territorio**, junto con el modo de edición global previo. Pulsa «Editar» en la ficha de un territorio; termina de ajustar los vértices y pulsa **Guardar territorio**.
+- Historial de cambios **antes de guardar**: botones Deshacer/Rehacer y teclas `Ctrl+Z`, `Ctrl+Y`, `⌘+Z`, `⌘+Shift+Z` cuando el foco no está en un campo de texto. Los cambios ya guardados en D1 requieren otra edición, no son revertidos por el historial local.
+- En celular el **mapa se muestra inmediatamente bajo la cabecera**, ocupa la mayor parte de la primera pantalla y el panel completo queda debajo. La vista pública mantiene los filtros en un menú deslizable.
+- Rediseño orgánico/premium: fondos cálidos, mejor jerarquía visual, tarjetas individuales, contrastes, controles táctiles y accesibilidad de teclado.
+
+Consulta [CAMBIOS_UX_2026-11-05.md](CAMBIOS_UX_2026-11-05.md) para la lista de comprobación tras publicar.
+
 ## Qué puedes hacer
 
 - Consultar mapas de Lambayeque, Mochumí, Túcume, Íllimo, Pacora y Mórrope con zoom a nivel de calle.

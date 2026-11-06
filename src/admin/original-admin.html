@@ -1,7 +1,7 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Administración | Territorios Lambayeque</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
-<style>
+<meta name="theme-color" content="#1b493d"><style>
 :root{font-family:Inter,system-ui,Arial,sans-serif;color:#1c332c}*{box-sizing:border-box}body{margin:0;background:#f6f8f5}button,input,select,textarea{font:inherit}button{cursor:pointer}.bar{height:68px;background:#153d33;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between}.bar b{font-size:19px}.bar small{font-size:12px;color:#b8d5c9}.badge{display:inline-flex;background:#2f6251;border-radius:20px;padding:8px 12px;font-size:11px}.app{display:flex;height:calc(100vh - 68px)}aside{width:376px;flex-shrink:0;overflow-y:auto;background:#fff;border-right:1px solid #dde7df;padding:24px;box-shadow:6px 0 20px #143c2a08}#map{flex:1;min-width:0}.overline{font-size:10px;color:#288b64;font-weight:850;letter-spacing:1.5px}.intro{color:#61786d;font-size:12px;line-height:1.6;margin:10px 0 15px}.status{font-size:12px;min-height:26px;margin:11px 0;color:#116f49}label{display:block;font-size:12px;font-weight:750;margin:14px 0 6px}input,select,textarea{width:100%;border:1px solid #d7e1da;border-radius:9px;padding:11px;background:#fff;color:#1d3b31;min-height:39px;font-size:13px}textarea{resize:vertical}.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}.btn{background:#136a51;color:#fff;border:0;border-radius:9px;font-weight:750;padding:12px 13px;font-size:12px}.btn.alt{background:#eff5f1;color:#15523e}.btn.danger{background:#fff1f0;color:#a43127}.btn:disabled{opacity:.55}.btn-full{width:100%}.section{border-top:1px solid #e7ece8;padding-top:19px;margin-top:20px}.section h3{margin:0 0 10px;font-size:15px}.list{max-height:210px;overflow-y:auto;border:1px solid #e5eae4;border-radius:11px}.list-row{display:block;background:#fff;border:0;border-bottom:1px solid #eff1ed;width:100%;text-align:left;padding:11px 12px;font-size:12px}.list-row:hover,.list-row.active{background:#e7f4ec}.list-row b{display:block}.list-row small{color:#829188;display:block;margin-top:4px}.small{color:#647c70;font-size:11px;line-height:1.5}.warn{padding:12px;background:#fff8e5;border:1px solid #ffdf92;color:#775821;border-radius:10px;font-size:11px;line-height:1.6}.checkbox-row{display:flex;gap:9px;align-items:start;font-size:12px;color:#4d665a;padding:8px 0}.checkbox-row input{width:16px;min-height:16px;margin-top:2px}
 .private-map-icon{border:0;background:transparent}
 .private-person-bubble{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:3px solid white;border-radius:50%;font-size:13px;font-weight:900;color:#fff;box-shadow:0 2px 8px #21372d65}
@@ -11,15 +11,51 @@
 .private-section h3{color:#175d46}.privacy-tag{color:#0b6547;letter-spacing:.08em;text-transform:uppercase;font-size:10px;font-weight:800}
 .map-tools{margin:12px 0}.map-tools .btn{min-height:44px}
 .leaflet-container{font-family:inherit}.leaflet-draw-toolbar{box-shadow:0 4px 15px #093a231f}@media(max-width:860px){.app{display:block;height:auto}aside{width:100%;height:auto;max-height:55vh}#map{height:45vh}.bar{padding:0 12px}.bar b{font-size:16px}.badge{font-size:10px}.intro{margin:6px 0}}
+
+/* Premium editorial UI · cálido, orgánico y fácil de usar */
+:root{--forest:#1c5143;--forest-deep:#163c33;--moss:#eff4eb;--paper:#fbfaf6;--ink:#1e342c;--border:#e4e8de;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:var(--ink)}
+[hidden]{display:none!important}html{scroll-behavior:smooth}body{background:var(--paper)}
+.bar{height:68px;background:linear-gradient(107deg,#163c33,#245949 68%,#2c6450);padding:0 23px;box-shadow:0 4px 18px #15392a20}
+.bar-title{display:flex;gap:12px;align-items:center}.brand-glyph{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;background:#ffffff23;color:#fff;font-size:24px}.bar b{font-weight:800;letter-spacing:-.5px}.header-actions{display:flex;gap:9px;align-items:center}.header-link,.logout-btn{font-size:12px;color:#f4fff5;text-decoration:none;padding:9px 12px;border-radius:11px;background:#ffffff13;border:1px solid #ffffff28}.logout-btn{cursor:pointer}.header-link:hover,.logout-btn:hover{background:#ffffff28}
+.app{height:calc(100dvh - 68px);min-height:0;display:flex}aside{width:390px;padding:25px 24px;box-shadow:none;background:linear-gradient(155deg,#fffdf9,#f8faf4);border-right:1px solid var(--border);scrollbar-color:#d5dfd5 transparent}#map{height:100%;width:100%}.map-shell{flex:1;min-width:0;position:relative;background:#e7eae3}
+.overline{color:#52795c;font-size:10px;letter-spacing:2px}.panel-title{font-size:25px;letter-spacing:-.8px;margin:9px 0 7px;line-height:1.18}.intro{font-size:12px;line-height:1.55;margin:8px 0 15px}
+.btn{border-radius:11px;font-size:12px;padding:11px 12px;background:var(--forest);min-height:40px;box-shadow:0 2px 5px #12291c0b}.btn.alt{background:#eaf1e9;color:#1f5944}.btn.danger{background:#faeded;color:#a84c42}.btn:hover:not(:disabled){filter:brightness(.96)}.btn:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #91c7a6;outline-offset:2px}
+input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa;min-height:43px}label{margin:13px 0 6px;font-size:12px}
+.section{border-color:#e7e9e2}.section h3{font-size:14px}.list{max-height:285px;border:0;border-radius:12px;display:grid;gap:8px;overflow-y:auto;padding:2px}
+.list-row{border:1px solid #e2e9df;border-radius:12px;background:#fffefa;padding:12px;box-shadow:0 3px 10px #16412c06;transition:border-color .15s,background .15s}
+.list-row:hover,.list-row.active{background:#eff5ed;border-color:#aacbbb}.list-row b{font-size:12px;color:#283d35}.list-row small{font-size:11px}
+.territory-row{display:flex;align-items:center;gap:0;position:relative;padding:3px;border:1px solid #e2e8df;border-radius:13px;background:#fffefa}.territory-row.active{border-color:var(--territory-color);background:#f8faf6}.territory-row .list-row{flex:1;border:0;box-shadow:none;background:transparent;min-width:0;padding:10px;text-align:left}.territory-swatch{width:10px;height:36px;border-radius:8px;background:var(--territory-color);flex:none;margin-left:7px}.list-edit{margin:0 8px;border:1px solid #d5e2d7;color:#285848;background:#eaf3ea;padding:9px;border-radius:9px;font-size:11px;font-weight:800;flex-shrink:0}
+.details-help{background:#f3f4ec;border:1px solid #e0e5d9;border-radius:13px;padding:10px 13px;margin:12px 0 16px}.details-help summary{cursor:pointer;color:#3b6a55;font-weight:750;font-size:12px}.details-help .warn{margin:11px 0 3px;background:#fff9eb;border-radius:10px}.details-help .intro{margin:10px 0}.privacy-tag{color:#236c4b}
+.private-section{border-radius:16px;margin-left:-8px;margin-right:-8px;background:#f0f7f0}.stat-line{background:#edf4ec;border:1px solid #d9e7d7;color:#3a654c;border-radius:12px;font-weight:650;line-height:1.5}
+.map-quicktools{position:absolute;bottom:24px;left:20px;z-index:500;display:flex;align-items:center;gap:8px;max-width:calc(100% - 90px)}
+.map-quicktools button{border:1px solid #dfe9de;box-shadow:0 6px 23px #193a2a24;background:#fffdf8;min-height:42px;border-radius:12px;color:#2a5c48;font-size:12px;font-weight:800;padding:0 13px;white-space:nowrap}.map-quicktools button:disabled{opacity:.48;cursor:not-allowed}.map-quicktools button:hover:not(:disabled){background:#eaf3ea}.map-quicktools .editing-now{background:#d3eada;color:#17523b;border-color:#77b58f}
+.map-selected-label{position:absolute;top:16px;left:54px;z-index:499;border:1px solid #e2eadd;border-radius:20px;background:#fffdf8ec;box-shadow:0 5px 18px #193a2a14;font-size:12px;font-weight:700;color:#315a46;padding:9px 13px;pointer-events:none;max-width:calc(100% - 120px)}
+.editor-help{font-size:11px;color:#6e8174;line-height:1.6}.unsaved-tip{font-size:11px;color:#7b6643;margin-top:7px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.leaflet-container{background:#e5ebe3}.leaflet-draw-toolbar,.leaflet-bar{border-radius:12px!important;overflow:hidden;box-shadow:0 5px 21px #143c3022!important}.leaflet-control-zoom a{border-radius:0!important}
+.territory-label-admin{background:#fffdfa;border:2px solid var(--territory-color);border-radius:10px;color:var(--territory-color);font-weight:900;padding:4px 7px;box-shadow:0 3px 10px #20352819}.leaflet-tooltip.territory-label-admin:before{display:none}
+@media(max-width:860px){
+ html,body{height:auto;min-height:100%;overflow-x:hidden}.bar{height:58px;padding:0 12px;position:relative;z-index:800}.bar b{font-size:14px}.bar small{font-size:10px}.brand-glyph{height:32px;width:32px;font-size:20px}.header-actions{gap:5px}.header-link,.logout-btn{font-size:10px;padding:7px 8px}
+ .app{display:flex;flex-direction:column;height:auto;min-height:calc(100dvh - 58px)}.map-shell{order:0;flex:none;height:64dvh;min-height:360px;max-height:700px;width:100%}aside{order:1;max-height:none;height:auto;overflow:visible;width:100%;padding:20px 17px 45px;border-right:0;border-top:1px solid var(--border)}
+ .panel-title{font-size:23px}.map-quicktools{left:12px;bottom:20px;max-width:calc(100% - 90px);gap:5px}.map-quicktools button{min-height:40px;padding:0 10px;font-size:11px}.map-selected-label{top:11px;left:12px;max-width:calc(100% - 115px);padding:7px 11px;font-size:11px}
+ .leaflet-top.leaflet-left{top:44px}.leaflet-top.leaflet-right{top:5px}.leaflet-control-attribution{font-size:9px}.private-section{margin-left:0;margin-right:0}
+ .row.map-tools .btn{font-size:11px}.list{max-height:none}
+}
+@media(max-width:360px){.header-link{max-width:88px;line-height:1.1}.map-quicktools button{padding:0 8px}.bar b{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 </style></head><body>
-<header class="bar"><div><b>⌖ Territorios · Administración</b><div><small>Editor geográfico — Lambayeque, Perú</small></div></div><div style="display:flex;align-items:center;gap:10px"><a style="color:#d7f6e5;text-decoration:none;font-size:12px" href="/">← Ver mapa público</a><button id="logout" style="border:1px solid #a3c6b8;background:transparent;color:white;border-radius:16px;padding:6px 12px;cursor:pointer;font-size:12px">Cerrar sesión</button></div></header>
+<header class="bar"><div class="bar-title"><span class="brand-glyph" aria-hidden="true">⌖</span><div><b>Territorios · Editor</b><div><small>Lambayeque, Perú</small></div></div></div><div class="header-actions"><a class="header-link" href="/">← Mapa público</a><button id="logout" class="logout-btn">Salir</button></div></header>
 <div class="app"><aside>
-  <div class="overline">EDITOR TERRITORIAL</div>
-  <p class="intro">Dibuja polígonos o rectángulos sobre calles reales. Modifica sus vértices y guarda. Para dividir una zona, traza otro polígono y ajusta el anterior para evitar superposiciones.</p>
-  <div class="warn"><b>Separación de datos:</b> los contornos geográficos se guardan en D1 pública. Los puntos de personas y su sexo se guardan <b>únicamente</b> en la D1 privada, accesible solo al iniciar sesión como administrador en este sitio. No compartas PDFs con información confidencial.</div>
+  <div class="overline">ESPACIO DE TRABAJO · TERRITORIOS</div>
+  <h1 class="panel-title">Diseña tu territorio.</h1>
+  <p class="intro">Selecciona un territorio, edita su contorno en el mapa y guarda los cambios.</p>
+  <details class="details-help"><summary>Consejos de edición y privacidad</summary>
+    <p class="intro">Dibuja polígonos o rectángulos. Para cambiar límites, selecciona «Editar» junto a un territorio; mueve los vértices y guarda. Evita superponer territorios.</p>
+    <div class="warn"><b>Separación de datos:</b> los contornos geográficos se guardan en D1 pública. Los puntos de personas y su sexo se guardan únicamente en la D1 privada. No compartas PDFs privados.</div>
+  </details>
   <label for="locality">Localidad del territorio</label><select id="locality"><option>Lambayeque</option><option>Mochumí</option><option>Túcume</option><option>Íllimo</option><option>Pacora</option><option>Mórrope</option></select>
   <label for="number">Número único de territorio (global)</label><input id="number" type="number" min="1" max="999999" placeholder="Ej. 1">
-  <p class="small" id="selectedText">Usa el polígono o rectángulo a la derecha del mapa. Puedes editar vértices. Guarda antes de seleccionar otro territorio.</p>
+  <p class="small" id="selectedText">Dibuja un nuevo contorno o pulsa «Editar» en un territorio guardado.</p>
+  <p class="editor-help">↶ Deshacer <kbd>Ctrl+Z</kbd> · ↷ Rehacer <kbd>Ctrl+Y</kbd> (también ⌘ en Mac). El historial funciona antes de guardar.</p>
   <div class="checkbox-row"><input id="publish" type="checkbox"><label for="publish" style="margin:0">Publicar en el mapa público<br><small>Solo después de verificar que el contorno no revela información sensible.</small></label></div>
   <div class="row"><button id="saveTerritory" class="btn">Guardar territorio</button><button id="resetTerritory" class="btn alt">Nuevo</button><button id="deleteTerritory" class="btn danger" disabled>Eliminar</button></div>
   <div class="row map-tools">
@@ -29,7 +65,7 @@
   <p class="small">El PDF toma el <b>encuadre actualmente visible</b> del mapa; haz zoom y mueve la vista para elegir el recorte. Es una ficha privada, con los puntos H/M de ese territorio.</p>
   <div id="territoryStats" class="stat-line">Selecciona un territorio para ver su resumen privado.</div>
   <div id="status" class="status" aria-live="polite"></div>
-  <section class="section"><h3>Territorios guardados <span id="totalTerritories">0</span></h3><div id="territoryList" class="list"></div></section>
+  <section class="section" id="territoriesSection"><div class="section-heading"><h3>Territorios guardados <span id="totalTerritories">0</span></h3></div><div id="territoryList" class="list"></div></section>
   <section class="section private-section">
     <div class="privacy-tag">Solo administrador · D1 privada</div>
     <h3>Puntos permanentes: hombres y mujeres</h3>
@@ -63,20 +99,106 @@
       <div class="row" style="margin-top:12px"><button id="savePoint" class="btn">Guardar punto</button><button id="deletePoint" class="btn danger">Eliminar</button></div>
     </div>
   </section>
-</aside><div id="map"></div></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+</aside><div class="map-shell"><div id="map" aria-label="Mapa editable de territorios"></div><div id="activeMapLabel" class="map-selected-label">Selecciona un territorio</div>
+<div class="map-quicktools" role="toolbar" aria-label="Historial y edición del mapa">
+<button id="undoChange" type="button" title="Deshacer (Ctrl+Z)" aria-label="Deshacer cambios sin guardar" disabled>↶ Deshacer</button>
+<button id="redoChange" type="button" title="Rehacer (Ctrl+Y)" aria-label="Rehacer cambios sin guardar" disabled>↷ Rehacer</button>
+<button id="editSelected" type="button" title="Editar vértices del territorio seleccionado" disabled>✎ Editar</button>
+</div></div></div>
+<script src="/territory-colors.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
+const territoryColor=window.TerritoryPalette.territoryColor;
 const cities={'Lambayeque':[-6.704,-79.908],'Mochumí':[-6.54778,-79.865],'Túcume':[-6.510152,-79.859588],'Íllimo':[-6.474021,-79.855127],'Pacora':[-6.428889,-79.838889],'Mórrope':[-6.540375,-80.015366]};
 const map=L.map('map').setView(cities.Lambayeque,14);
 const tileLayer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,crossOrigin:'anonymous',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
 const fg=new L.FeatureGroup().addTo(map),pointMarkers=new L.LayerGroup().addTo(map),privateMarkers=new L.LayerGroup().addTo(map);
 let territories=[],points=[],privatePoints=[],selectedId=null,selectedLayer=null,pId=null,placingPoint=false,privatePlacing=false,privateSelectedId=null;
 let privateReady=false;
+let history=[],historyPosition=-1,restoringHistory=false,historyTimer=null,editingLayer=null,draftSerial=0;
+const deepLinkedTerritory=new URLSearchParams(location.search).get('territorio');
+let deepLinkApplied=false;
+
 const draw=new L.Control.Draw({position:'topright',draw:{polygon:{allowIntersection:false,showArea:true,shapeOptions:{color:'#157457'}},polyline:false,rectangle:{shapeOptions:{color:'#157457'}},circle:false,marker:false,circlemarker:false},edit:{featureGroup:fg,remove:false}});map.addControl(draw);
 const setStatus=(message)=>{$('status').textContent=message;};
-const layerFor=(t)=>{const x=L.geoJSON({type:'Feature',geometry:t.geometry,properties:{}}).getLayers()[0];x.setStyle({color:t.published?'#14785b':'#9c8259',fillOpacity:.15,weight:3});const tag=document.createElement('span');tag.textContent='#'+t.number;x.bindTooltip(tag,{permanent:true,direction:'center'});x.on('click',()=>selectTerritory(t.id));return x;};
+const layerFor=(t)=>{const x=L.geoJSON({type:'Feature',geometry:t.geometry,properties:{}}).getLayers()[0];
+ const color=territoryColor(t);x.setStyle({color,fillColor:color,fillOpacity:t.published?.22:.13,weight:3,opacity:1,dashArray:t.published?null:'7 5'});
+ const tag=document.createElement('span');tag.textContent='#'+t.number;tag.style.setProperty('--territory-color',color);
+ x.bindTooltip(tag,{permanent:true,direction:'center',className:'territory-label-admin'});x.on('click',()=>selectTerritory(t.id));return x;};
+const layerForDraft=(geometry,key)=>{const layer=L.geoJSON({type:'Feature',geometry,properties:{}}).getLayers()[0];layer._draftId=key;layer.setStyle({color:'#437E6F',fillColor:'#437E6F',fillOpacity:.18,weight:3,dashArray:'6 4'});layer.on('click',()=>{selectedId=null;selectedLayer=layer;updateTerritoryControls();});return layer;};
+function updateTerritoryControls(){
+ const enabled=!!selectedLayer;const saved=!!selectedId;
+ $('deleteTerritory').disabled=!saved;$('fitTerritory').disabled=!enabled;$('exportTerritoryPdf').disabled=!saved;
+ $('editSelected').disabled=!enabled;
+ const t=territories.find(x=>x.id===selectedId);
+ $('activeMapLabel').textContent=t?`● Territorio #${t.number} · ${t.locality}`:enabled?'● Nuevo contorno':'Selecciona un territorio';
+ $('activeMapLabel').style.color=t?territoryColor(t):'#315a46';
+ $('editSelected').textContent=editingLayer===selectedLayer?'✓ Terminar edición':'✎ Editar';
+ $('editSelected').classList.toggle('editing-now',editingLayer===selectedLayer);
+ updateTerritoryStats();
+}
+function stopIndividualEditing(){
+ if(editingLayer?.editing?.enabled())editingLayer.editing.disable();
+ editingLayer=null;updateTerritoryControls();
+}
+function revealMapOnMobile(){
+ if(window.matchMedia('(max-width:860px)').matches){
+  document.querySelector('.map-shell').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
+  setTimeout(()=>map.invalidateSize({pan:false}),250);
+ }
+}
+function editIndividualTerritory(id){
+ if(id)selectTerritory(id,true);
+ if(!selectedLayer){setStatus('Selecciona o dibuja un territorio.');return;}
+ if(editingLayer===selectedLayer){stopIndividualEditing();recordHistory();setStatus('Edición terminada. Guarda los cambios del territorio.');return;}
+ stopIndividualEditing();
+ const globalEdit=draw?._toolbars?.edit?._modes?.edit?.handler;
+ if(globalEdit?.enabled?.())globalEdit.disable();
+ if(!selectedLayer.editing && L.Edit?.Poly)selectedLayer.editing=new L.Edit.Poly(selectedLayer);
+ if(!selectedLayer.editing){setStatus('No se puede editar este contorno.');return;}
+ editingLayer=selectedLayer;editingLayer.editing.enable();updateTerritoryControls();revealMapOnMobile();
+ setStatus('Arrastra los vértices del territorio y pulsa Guardar al terminar.');
+}
+function captureHistory(){return {
+ layers:fg.getLayers().map(l=>({key:l._territoryId||l._draftId||('draft-'+(++draftSerial)),id:l._territoryId||null,geometry:l.toGeoJSON().geometry})),
+ selectedKey:selectedLayer?(selectedLayer._territoryId||selectedLayer._draftId):null,
+ selectedId,
+ fields:{locality:$('locality').value,number:$('number').value,publish:$('publish').checked}
+};}
+function updateHistoryButtons(){$('undoChange').disabled=historyPosition<=0;$('redoChange').disabled=historyPosition<0||historyPosition>=history.length-1;}
+function resetHistory(){clearTimeout(historyTimer);history=[captureHistory()];historyPosition=0;updateHistoryButtons();}
+function recordHistory(){if(restoringHistory)return;clearTimeout(historyTimer);
+ const snap=captureHistory(),before=history[historyPosition];if(before&&JSON.stringify(before.layers)===JSON.stringify(snap.layers)&&JSON.stringify(before.fields)===JSON.stringify(snap.fields))return;
+ history=history.slice(0,historyPosition+1);history.push(snap);if(history.length>70)history.shift();historyPosition=history.length-1;updateHistoryButtons();}
+function queueHistory(){if(restoringHistory)return;clearTimeout(historyTimer);historyTimer=setTimeout(recordHistory,320);}
+function restoreHistory(snap){restoringHistory=true;try{
+ stopIndividualEditing();fg.clearLayers();selectedLayer=null;
+ for(const item of snap.layers){
+  const territory=item.id?territories.find(t=>t.id===item.id):null;
+  const layer=territory?layerFor({...territory,geometry:item.geometry}):layerForDraft(item.geometry,item.key);
+  if(item.id)layer._territoryId=item.id;fg.addLayer(layer);
+  if(item.key===snap.selectedKey)selectedLayer=layer;
+ }
+ selectedId=snap.selectedId;
+ $('locality').value=snap.fields.locality;$('number').value=snap.fields.number;$('publish').checked=snap.fields.publish;
+ $('selectedText').textContent=selectedLayer?'Cambios restaurados. Revisa el contorno y guarda cuando esté listo.':'Selecciona o dibuja un territorio.';
+ updateTerritoryControls();renderLists();
+ }finally{restoringHistory=false;}}
+function navigateHistory(delta){clearTimeout(historyTimer);recordHistory();const idx=historyPosition+delta;if(idx<0||idx>=history.length)return;
+ historyPosition=idx;restoreHistory(history[idx]);updateHistoryButtons();setStatus(delta<0?'Cambio deshecho.':'Cambio rehecho.');}
+$('undoChange').addEventListener('click',()=>navigateHistory(-1));
+$('redoChange').addEventListener('click',()=>navigateHistory(1));
+$('editSelected').addEventListener('click',()=>editIndividualTerritory());
+document.addEventListener('keydown',event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||/^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName)||event.target?.isContentEditable)return;
+ const key=event.key.toLowerCase();if(key==='z'||key==='y'){
+  event.preventDefault();navigateHistory(key==='y'||event.shiftKey?1:-1);
+ }
+});
+map.on('draw:editvertex',queueHistory);map.on('draw:editmove',queueHistory);map.on('draw:editresize',queueHistory);
+map.getContainer().addEventListener('pointerup',()=>{if(editingLayer)queueHistory();});
+
 async function api(path,opts={}){
  const r=await fetch(path,{...opts,headers:{...(opts.body?{'content-type':'application/json'}:{}),...(opts.headers||{})},cache:'no-store'});
  let v;try{v=await r.json();}catch(_){throw Error('Respuesta no válida del servidor.');}
@@ -84,7 +206,7 @@ async function api(path,opts={}){
 }
 async function reload(){try{
  const data=await api('/api/admin/all');territories=data.territories;points=data.points;
- fg.clearLayers();pointMarkers.clearLayers();
+ stopIndividualEditing();fg.clearLayers();pointMarkers.clearLayers();
  for(const t of territories){const layer=layerFor(t);layer._territoryId=t.id;fg.addLayer(layer);}
  for(const p of points.filter(x=>x.status==='approved')){
   const m=L.circleMarker([p.lat,p.lng],{radius:7,color:'#fff',weight:2,fillColor:'#e28a3c',fillOpacity:1});const safe=document.createElement('strong');safe.textContent=p.title;m.bindPopup(safe);pointMarkers.addLayer(m);
@@ -92,15 +214,24 @@ async function reload(){try{
  renderLists();
  await reloadPrivate();
  if(selectedId){const t=territories.find(x=>x.id===selectedId);if(t)selectTerritory(selectedId,false);else resetTerritory();}
+  if(!deepLinkApplied && deepLinkedTerritory){deepLinkApplied=true;
+   if(territories.some(t=>t.id===deepLinkedTerritory))editIndividualTerritory(deepLinkedTerritory);
+   else setStatus('El territorio solicitado no existe o ya fue eliminado.');}
+  resetHistory();
  }catch(e){setStatus(e.message);}}
 function renderLists(){
  $('totalTerritories').textContent=String(territories.length);$('pendingCount').textContent='('+points.filter(x=>x.status==='pending').length+' pendientes)';
  $('territoryList').replaceChildren();
  for(const t of territories){
-  const b=document.createElement('button');b.className='list-row'+(t.id===selectedId?' active':'');
+  const row=document.createElement('div');row.className='territory-row'+(t.id===selectedId?' active':'');row.style.setProperty('--territory-color',territoryColor(t));
+  const swatch=document.createElement('span');swatch.className='territory-swatch';swatch.setAttribute('aria-hidden','true');
+  const b=document.createElement('button');b.type='button';b.className='list-row';
   const strong=document.createElement('b');strong.textContent=`#${t.number} — ${t.locality}`;
   const small=document.createElement('small');small.textContent=t.published?'Publicado':'Borrador, no publicado';b.append(strong,small);
-  b.addEventListener('click',()=>selectTerritory(t.id,true));$('territoryList').append(b);
+  b.addEventListener('click',()=>selectTerritory(t.id,true));
+  const edit=document.createElement('button');edit.className='list-edit';edit.type='button';edit.textContent='✎ Editar';edit.setAttribute('aria-label',`Editar territorio ${t.number}`);
+  edit.addEventListener('click',()=>editIndividualTerritory(t.id));
+  row.append(swatch,b,edit);$('territoryList').append(row);
  }
  $('pointList').replaceChildren();
  for(const p of [...points].sort((a,b)=>({pending:0,approved:1,rejected:2}[a.status]-{pending:0,approved:1,rejected:2}[b.status]))){
@@ -112,29 +243,33 @@ function renderLists(){
 }
 function selectTerritory(id,pan=true){
  const t=territories.find(x=>x.id===id);if(!t)return;
+ if(editingLayer && editingLayer!==fg.getLayers().find(x=>x._territoryId===id))stopIndividualEditing();
  selectedId=id;selectedLayer=fg.getLayers().find(x=>x._territoryId===id)||null;
  $('locality').value=t.locality;$('number').value=t.number;$('publish').checked=!!t.published;
- $('deleteTerritory').disabled=false;$('fitTerritory').disabled=false;$('exportTerritoryPdf').disabled=false;updateTerritoryStats();$('selectedText').textContent=`Editando territorio #${t.number} (${t.locality}). Cambia vértices con el control de edición, luego guarda.`;
- if(pan&&selectedLayer)map.fitBounds(selectedLayer.getBounds(),{padding:[40,40],maxZoom:17});renderLists();
+ updateTerritoryControls();$('selectedText').textContent=`Editando territorio #${t.number} (${t.locality}). Cambia vértices con el control de edición, luego guarda.`;
+ if(pan&&selectedLayer){map.fitBounds(selectedLayer.getBounds(),{padding:[40,40],maxZoom:17});revealMapOnMobile();}renderLists();
 }
 function resetTerritory(){
+ stopIndividualEditing();
  if(!selectedId&&selectedLayer&&fg.hasLayer(selectedLayer))fg.removeLayer(selectedLayer);
  selectedId=null;selectedLayer=null;$('number').value='';$('publish').checked=false;$('deleteTerritory').disabled=true;
- $('fitTerritory').disabled=true;$('exportTerritoryPdf').disabled=true;updateTerritoryStats();
+ updateTerritoryControls();
  $('selectedText').textContent='Dibuja un nuevo polígono con la herramienta de la esquina superior derecha del mapa.';renderLists();
 }
 map.on(L.Draw.Event.CREATED,e=>{
  if(!['polygon','rectangle'].includes(e.layerType))return;
  if(selectedLayer&&!selectedId)fg.removeLayer(selectedLayer);
- resetTerritory();selectedLayer=e.layer;fg.addLayer(selectedLayer);
+ resetTerritory();selectedLayer=e.layer;selectedLayer._draftId='draft-'+(++draftSerial);selectedLayer.setStyle({color:'#437E6F',fillColor:'#437E6F',fillOpacity:.18,weight:3});fg.addLayer(selectedLayer);updateTerritoryControls();
  $('selectedText').textContent='Nuevo contorno dibujado. Indica localidad y número; se guardará sin publicar por defecto.';
- setStatus('Nuevo polígono listo para guardar.');
+ setStatus('Nuevo polígono listo para guardar.');recordHistory();
 });
-map.on(L.Draw.Event.EDITED,()=>setStatus('Contornos modificados. Selecciona cada territorio editado y pulsa Guardar.'));
+map.on(L.Draw.Event.EDITED,()=>{recordHistory();setStatus('Contornos modificados. Selecciona cada territorio editado y pulsa Guardar.');});
 $('locality').addEventListener('change',()=>{map.setView(cities[$('locality').value],14);});
-$('resetTerritory').addEventListener('click',resetTerritory);
+$('resetTerritory').addEventListener('click',()=>{resetTerritory();recordHistory();});
+for(const id of ['number','locality','publish'])$(id).addEventListener('change',recordHistory);
 $('saveTerritory').addEventListener('click',async()=>{
  if(!selectedLayer)return setStatus('Primero dibuja o selecciona un polígono.');
+ stopIndividualEditing();recordHistory();
  const number=Number($('number').value),locality=$('locality').value;
  const published=$('publish').checked;
  if(published&&!confirm('¿Confirmas que este límite se puede publicar y NO revela la ubicación ni distribución de personas sordas?'))return;
@@ -148,6 +283,7 @@ $('saveTerritory').addEventListener('click',async()=>{
 });
 $('deleteTerritory').addEventListener('click',async()=>{
  if(!selectedId||!confirm('¿Eliminar definitivamente este territorio?'))return;
+ stopIndividualEditing();
  try{await api(`/api/admin/territories/${selectedId}`,{method:'DELETE'});resetTerritory();await reload();setStatus('Territorio eliminado.');}catch(e){setStatus(e.message);}
 });
 function selectPoint(p){
@@ -286,6 +422,7 @@ $('exportTerritoryPdf').addEventListener('click',async()=>{
  }catch(e){setStatus('No fue posible descargar el PDF: '+e.message);}
  finally{btn.disabled=false;}
 });
+window.addEventListener('resize',()=>map.invalidateSize({pan:false}));
 reload();
 })();
 </script><script src="/private-export.js"></script><script>document.getElementById('logout')?.addEventListener('click',async()=>{try{await fetch('/api/auth/logout',{method:'POST'});}finally{location.href='/'}});</script></body></html>

@@ -1,0 +1,17 @@
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+import {strict as assert} from 'node:assert';
+const root=new URL('../',import.meta.url);
+const colorsJS=await readFile(new URL('../public/territory-colors.js',import.meta.url),'utf8');
+const context={window:{}};vm.runInNewContext(colorsJS,context);
+const colors=Array.from({length:36},(_,i)=>context.window.TerritoryPalette.territoryColor({number:i+1}));
+assert.equal(new Set(colors).size,36,'Cada número debe tener su propio color');
+assert.equal(context.window.TerritoryPalette.territoryColor({number:2}),colors[1], 'Color estable');
+const pub=await readFile(new URL('../public/app.js',import.meta.url),'utf8');
+assert.ok(pub.includes("'/editar?territorio='"),'Cada ficha debe enlazar a editar su territorio');
+const html=await readFile(new URL('../src/admin/original-admin.html',import.meta.url),'utf8');
+for(const id of ['undoChange','redoChange','editSelected','activeMapLabel'])assert.ok(html.includes(`id="${id}"`),id);
+assert.ok(html.includes('map-shell')&&html.includes('order:0'),'El mapa debe ir primero en móvil');
+const auth=await readFile(new URL('../src/auth.js',import.meta.url),'utf8');
+assert.ok(auth.includes("new URLSearchParams(location.search).get('territorio')"),'El login debe conservar la selección');
+console.log('PASS: paleta única y estable, edición individual, historial, mapa arriba y deep link autenticado.');

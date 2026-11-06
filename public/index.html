@@ -10,8 +10,8 @@
 </head><body>
 <div id="app">
   <header class="topbar">
-    <div class="brand"><span class="brand-icon">⌖</span><div><strong>Territorios</strong><small>Mapa público · Lambayeque</small></div></div>
-    <div class="top-actions"><a class="editor-link" href="/editar" title="Editor de territorios">✎ Editar mapa</a><span id="liveStatus" class="live-pill"><i></i> Conectando</span><button class="icon-btn" id="locateBtn" title="Mi ubicación">◎</button><button class="icon-btn mobile-menu" id="mobileMenu" aria-label="Mostrar menú">☰</button></div>
+    <div class="brand"><span class="brand-icon" aria-hidden="true">⌖</span><div><strong>Territorios</strong><small>Mapa público · Lambayeque</small></div></div>
+    <div class="top-actions"><a class="editor-link" href="/editar" title="Editor de territorios">✎ Editar mapa</a><span id="liveStatus" class="live-pill" aria-live="polite"><i></i> Conectando</span><button class="icon-btn mobile-menu" id="mobileMenu" aria-expanded="false" aria-controls="sidebar" aria-label="Abrir filtros">☰</button></div>
   </header>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-body">
@@ -33,6 +33,7 @@
     <footer class="side-footer">Cartografía © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> · Datos comunitarios revisados</footer>
   </aside>
   <main id="mapArea"><div id="map" role="application" aria-label="Mapa interactivo de Lambayeque y alrededores"></div>
+    <button class="icon-btn map-locate" id="locateBtn" title="Mi ubicación" aria-label="Centrar en mi ubicación">◎</button>
     <div class="map-hint" id="mapHint">Desplázate y acerca el mapa para explorar las calles</div>
 
     <button id="addPointBtn" class="primary-btn floating-add" hidden aria-hidden="true" style="display:none">Sugerir punto</button>
@@ -53,5 +54,6 @@
   </form>
 </section></div>
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="/territory-colors.js"></script>
 <script defer src="/app.js"></script>
 </body></html>

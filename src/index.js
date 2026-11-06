@@ -21,7 +21,7 @@ export default {
       if(url.pathname === '/editar' || url.pathname === '/admin' || url.pathname === '/private-export.js' || url.pathname.startsWith('/api/admin/')) {
         if(!await hasAdminSession(request,env)) {
           if(method === 'GET' && (url.pathname === '/editar' || url.pathname === '/admin'))
-            return Response.redirect(url.origin+'/acceso',302);
+            return Response.redirect(url.origin+'/acceso'+(url.searchParams.has('territorio')?'?territorio='+encodeURIComponent(url.searchParams.get('territorio')):''),302);
           return error('Necesitas iniciar sesión para editar.',401);
         }
         return adminHandler.fetch(request,env,ctx);
