@@ -266,6 +266,7 @@ function showDestination(lat,lng,title,hint,isApproximate=false){
   routeOrigin=null;routeOriginSource=null;
   destination={lat,lng,title,isApproximate};
   $('destinationTitle').textContent=title;
+  $('destinationMobileName').textContent=title.startsWith('Territorio #')?title.replace(/^Territorio\s*/, ''):title;
   $('destinationHint').textContent=hint;
   $('destinationPanel').hidden=false;
 }

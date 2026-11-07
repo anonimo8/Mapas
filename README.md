@@ -99,3 +99,7 @@ La aplicación **no usa Cloudflare Access**: tiene un sistema propio de login, c
 Con Node.js: `npm install`, `npm run check`, `npm test`. Se verificó localmente el código y la generación PDF; **no se ha desplegado ni probado en tu Cloudflare real**.
 
 **Limitación de edición:** se puede redibujar y ajustar manualmente una división. No hay una operación automática que corte un polígono en dos al dibujar una línea. En PDF eliges el encuadre visible del mapa; la exportación depende de que las teselas carguen en el navegador.
+
+
+## R6 — Destino compacto / contraseña visible
+La tarjeta de destino móvil se muestra en una sola fila semitransparente y el acceso de administración incorpora ojo para mostrar u ocultar contraseña. Ver `CAMBIO_UX_DESTINO_COMPACTO_Y_OJO_R6.md`.
