@@ -1,5 +1,5 @@
-/* Mapa público: territorios, geocodificación, ubicación del visitante y enlaces
-   voluntarios de navegación. Nunca recibe coordenadas ni fichas privadas. */
+/* Mapa público: territorios, búsqueda, GPS y navegación integrada con Leaflet.
+   Coordenadas GPS sólo solicitadas con permiso y para rutas a petición. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const map=L.map('map',{zoomControl:false,preferCanvas:true,scrollWheelZoom:true})
@@ -10,11 +10,13 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
 L.control.zoom({position:'bottomright',zoomInTitle:'Acercar mapa',zoomOutTitle:'Alejar mapa'}).addTo(map);
 const shapes=L.featureGroup().addTo(map);
 const destinationMarkers=L.featureGroup().addTo(map);
+const routeLayers=L.featureGroup().addTo(map);
 const colorFor=window.TerritoryPalette.territoryColor;
 let territories=[],territorySource='';
 let counts=new Map(),statsAvailable=false,initialFit=false,lastSignature='';
 let currentLocation=null,userMarker=null,accuracyCircle=null,destination=null;
 let lastSearchId=0;
+let routeOrigin=null,routeOriginSource=null,choosingStart=false,routeAbort=null,routeRequestId=0;
 const numberFormat=new Intl.NumberFormat('es-PE');
 const validCoordinate=(lat,lng)=>Number.isFinite(lat)&&Number.isFinite(lng)&&lat>=-18.5&&lat<=0&&lng>=-82.5&&lng<=-68;
 const validTerritory=t=>t&&Number.isSafeInteger(Number(t.number))&&t.geometry&&
@@ -48,7 +50,7 @@ function render(){
         const badge=document.createElement('span');badge.className='territory-label';badge.textContent=String(t.number);
         badge.style.setProperty('--territory-color',color);
         polygon.bindTooltip(badge,{permanent:true,direction:'center',className:'territory-tooltip',opacity:1,interactive:false});
-        polygon.on('click',()=>selectTerritory(t,polygon));
+        polygon.on('click',()=>{if(!choosingStart)selectTerritory(t,polygon);});
       }
     });
     geo.addTo(shapes);
@@ -72,9 +74,143 @@ function render(){
     // No recentrar al actualizar estadísticas ni interrumpir el GPS o la búsqueda.
   }
 }
+function stopRouteRequest(){
+  routeRequestId++;
+  if(routeAbort){routeAbort.abort();routeAbort=null;}
+  $('routeButton').disabled=false;
+}
+function clearRouteDrawing(){
+  stopRouteRequest();routeLayers.clearLayers();
+  $('routeDetails').hidden=true;
+  $('routeSteps').replaceChildren();
+}
+function routeStatus(text,isError=false){
+  const status=$('routeStatus');status.textContent=text;status.classList.toggle('is-error',isError);
+}
+function closeRoutePlanner(){
+  choosingStart=false;$('routePick').classList.remove('is-active');
+  clearRouteDrawing();$('routePanel').hidden=true;
+}
+function setOrigin(lat,lng,source,label){
+  if(!validCoordinate(lat,lng)){routeStatus('El punto inicial está fuera del área admitida.',true);return;}
+  choosingStart=false;$('routePick').classList.remove('is-active');
+  routeOrigin={lat,lng};routeOriginSource=source;
+  routeStatus(`Origen: ${label}. Calculando ruta…`);
+  void calculateRoute();
+}
+function routePolyline6(encoded){
+  // Valhalla codifica la geometría de la ruta como polyline con precisión 1e-6.
+  let idx=0,lat=0,lng=0;const points=[];
+  while(idx<encoded.length&&points.length<20000){
+    const values=[];
+    for(let k=0;k<2;k++){
+      let result=0,shift=0,byte;
+      do{
+        if(idx>=encoded.length||shift>30)throw Error('Geometría incompleta.');
+        byte=encoded.charCodeAt(idx++)-63;
+        if(byte<0||byte>63)throw Error('Geometría inválida.');
+        result|=(byte&31)<<shift;shift+=5;
+      }while(byte>=32);
+      values.push((result&1)?~(result>>1):(result>>1));
+    }
+    lat+=values[0];lng+=values[1];
+    const x=lat/1e6,y=lng/1e6;
+    if(!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>90||Math.abs(y)>180)throw Error('Coordenadas de ruta inválidas.');
+    points.push([x,y]);
+  }
+  if(idx!==encoded.length||points.length<2)throw Error('La geometría de la ruta no se pudo dibujar.');
+  return points;
+}
+function niceKm(km){return km<1?`${Math.round(km*1000)} m`:`${km.toLocaleString('es-PE',{maximumFractionDigits:1})} km`;}
+function niceTime(seconds){
+  const m=Math.max(1,Math.ceil(seconds/60));return m>=60?`${Math.floor(m/60)} h ${m%60?`${m%60} min`:''}`.trim():`${m} min`;
+}
+async function calculateRoute(){
+  if(!destination||!routeOrigin){routeStatus('Primero elige tu ubicación o el punto de partida.');return;}
+  clearRouteDrawing();const id=++routeRequestId;
+  const abort=new AbortController();routeAbort=abort;
+  const mode=$('routeMode').value;
+  $('routeButton').disabled=true;
+  routeStatus(`Calculando recorrido ${mode==='walking'?'a pie':'en auto'} dentro del mapa…`);
+  try{
+    const response=await fetch('/api/route',{
+      method:'POST',cache:'no-store',signal:abort.signal,
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({start:routeOrigin,end:{lat:destination.lat,lng:destination.lng},mode})
+    });
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||'No se encontró una ruta para estos puntos.');
+    const points=routePolyline6(data.shape);
+    if(id!==routeRequestId)return;
+    const line=L.polyline(points,{color:'#1680c6',weight:6,opacity:.95,lineCap:'round',lineJoin:'round'}).addTo(routeLayers);
+    L.circleMarker([routeOrigin.lat,routeOrigin.lng],{radius:7,color:'#fff',weight:2,fillColor:'#1680c6',fillOpacity:1})
+      .bindTooltip('Inicio de recorrido').addTo(routeLayers);
+    L.circleMarker([destination.lat,destination.lng],{radius:7,color:'#fff',weight:2,fillColor:'#1e754c',fillOpacity:1})
+      .bindTooltip(destination.title).addTo(routeLayers);
+    map.fitBounds(line.getBounds(),{paddingTopLeft:[30,150],paddingBottomRight:[30,180],maxZoom:17});
+    $('routeDistance').textContent=niceKm(data.distanceKm);
+    $('routeDuration').textContent=`≈ ${niceTime(data.durationSeconds)} · ${mode==='walking'?'A pie':'En auto'}`;
+    const steps=$('routeSteps');steps.replaceChildren();
+    for(const step of (Array.isArray(data.steps)?data.steps:[])){
+      const li=document.createElement('li');
+      const detail=document.createElement('span');detail.textContent=step.text;
+      const km=document.createElement('small');km.textContent=step.lengthKm>0?niceKm(step.lengthKm):'';
+      li.append(detail,km);steps.append(li);
+    }
+    $('routeDetails').hidden=false;
+    routeStatus(destination.isApproximate?
+      'Recorrido orientativo: el destino es el centro aproximado del territorio.':'Ruta dibujada en el mapa.');
+  }catch(err){
+    if(id!==routeRequestId||err.name==='AbortError')return;
+    routeStatus(err.message||'No se pudo calcular la ruta. Inténtalo otra vez.',true);
+  }finally{
+    if(id===routeRequestId){routeAbort=null;$('routeButton').disabled=false;}
+  }
+}
+$('routeButton').addEventListener('click',()=>{
+  if(!destination)return;
+  $('routePanel').hidden=false;
+  if(routeOrigin){void calculateRoute();return;}
+  if(currentLocation){setOrigin(currentLocation.lat,currentLocation.lng,'gps','mi ubicación GPS');return;}
+  routeStatus('Elige tu ubicación GPS, una dirección de partida o toca el mapa para marcar el inicio.');
+});
+$('closeRoute').addEventListener('click',closeRoutePlanner);
+$('clearRoute').addEventListener('click',()=>{clearRouteDrawing();routeStatus('Recorrido eliminado. Puedes calcularlo de nuevo.');});
+$('routeMode').addEventListener('change',()=>{if(routeOrigin&&destination)void calculateRoute();});
+$('routePick').addEventListener('click',()=>{
+  choosingStart=!choosingStart;$('routePick').classList.toggle('is-active',choosingStart);
+  routeStatus(choosingStart?'Toca el mapa donde vas a empezar. No seleccionarás otro destino.':'Selección manual cancelada.');
+});
+map.on('click',e=>{
+  if(!choosingStart)return;
+  setOrigin(e.latlng.lat,e.latlng.lng,'mapa','punto marcado en el mapa');
+});
+$('routeGPS').addEventListener('click',()=>{requestGPS(true);});
+$('routeOriginForm').addEventListener('submit',async e=>{
+  e.preventDefault();const q=$('routeOriginInput').value.trim();
+  if(q.length<4){routeStatus('Escribe una dirección de partida de al menos cuatro caracteres.',true);return;}
+  const list=$('routeOriginResults');list.replaceChildren();list.hidden=true;
+  routeStatus('Buscando puntos de partida…');
+  try{
+    const response=await fetch(`/api/geocode?q=${encodeURIComponent(q)}`,{cache:'no-store'});
+    const data=await response.json();if(!response.ok)throw Error(data.error||'No se pudo consultar la dirección.');
+    if(!Array.isArray(data)||!data.length)throw Error('Dirección de partida no encontrada. Intenta con otra calle.');
+    for(const place of data.filter(v=>validCoordinate(Number(v.lat),Number(v.lng))).slice(0,5)){
+      const btn=document.createElement('button');btn.type='button';
+      btn.textContent=String(place.label||'Dirección encontrada').slice(0,145);
+      btn.addEventListener('click',()=>{list.hidden=true;setOrigin(Number(place.lat),Number(place.lng),'address',String(place.label||'dirección elegida').split(',').slice(0,2).join(','));});
+      list.append(btn);
+    }
+    if(!list.children.length)throw Error('No hay coordenadas válidas para esa dirección.');
+    list.hidden=false;routeStatus('Elige la dirección donde iniciarás el recorrido.');
+  }catch(err){routeStatus(err.message||'No se encontró el origen.',true);}
+});
 function showDestination(lat,lng,title,hint,isApproximate=false){
   if(!validCoordinate(lat,lng)){message('No se pudo determinar un destino válido.',true);return;}
+  // Al cambiar el destino, limpiar cualquier recorrido anterior sin cerrar el panel.
+  clearRouteDrawing();
   destination={lat,lng,title,isApproximate};
+  if(!$('routePanel').hidden)routeStatus('Destino actualizado. Pulsa «Cómo llegar» para recalcular el recorrido.');
   $('destinationTitle').textContent=title;
   $('destinationHint').textContent=hint;
   $('destinationPanel').hidden=false;
@@ -84,21 +220,12 @@ function selectTerritory(t,polygon){
   if(!validCoordinate(center.lat,center.lng))return;
   showDestination(center.lat,center.lng,`Territorio #${t.number} · ${t.locality||'Lambayeque'}`,
     `${statsText(t)} · Ruta aproximada al centro del territorio`,true);
-  message('Territorio seleccionado. Pulsa «Cómo llegar» para abrir la navegación.');
+  message('Territorio seleccionado. Pulsa «Cómo llegar» para ver el recorrido en el mapa.');
 }
 function clearDestination(){
-  destination=null;destinationMarkers.clearLayers();$('destinationPanel').hidden=true;
+  closeRoutePlanner();destination=null;destinationMarkers.clearLayers();$('destinationPanel').hidden=true;
 }
 $('clearDestination').addEventListener('click',()=>{clearDestination();message('');});
-$('routeButton').addEventListener('click',()=>{
-  if(!destination)return;
-  const qs=new URLSearchParams({api:'1',destination:`${destination.lat},${destination.lng}`,travelmode:'walking'});
-  // Las coordenadas GPS solo se comparten con Google Maps tras pulsar este botón.
-  if(currentLocation)qs.set('origin',`${currentLocation.lat},${currentLocation.lng}`);
-  const url=`https://www.google.com/maps/dir/?${qs.toString()}`;
-  const opened=window.open(url,'_blank','noopener,noreferrer');
-  if(!opened)location.href=url;
-});
 function zoomToTerritory(t){
   const found=shapes.getLayers().filter(l=>l instanceof L.GeoJSON).flatMap(l=>l.getLayers()).find(l=>{
     // Identificar por pertenencia al polígono original (geometría es la misma en GeoJSON).
@@ -164,14 +291,18 @@ $('mapSearch').addEventListener('submit',async event=>{
     message(`${found.length} coincidencia${found.length===1?'':'s'}. Comprueba la dirección y elige una.`);
   }catch(err){if(lastSearchId===searchId)message(err.message||'El buscador no está disponible temporalmente.',true);}
 });
-$('locateButton').addEventListener('click',()=>{
-  if(!navigator.geolocation){message('Este dispositivo no ofrece ubicación GPS.',true);return;}
-  if(!window.isSecureContext){message('La ubicación requiere HTTPS o localhost.',true);return;}
-  const btn=$('locateButton');btn.disabled=true;message('Solicitando permiso para conocer tu ubicación…');
+function requestGPS(asRouteOrigin=false){
+  const errorInfo=t=>{if(asRouteOrigin)routeStatus(t,true);else message(t,true);};
+  if(!navigator.geolocation){errorInfo('Este dispositivo no ofrece ubicación GPS. Puedes elegir un inicio en el mapa.');return;}
+  if(!window.isSecureContext){errorInfo('La ubicación requiere HTTPS. Puedes elegir un inicio en el mapa.');return;}
+  const btn=asRouteOrigin?$('routeGPS'):$('locateButton');
+  btn.disabled=true;
+  if(asRouteOrigin)routeStatus('Solicitando permiso para tu ubicación GPS…');
+  else message('Solicitando permiso para conocer tu ubicación…');
   navigator.geolocation.getCurrentPosition(pos=>{
     btn.disabled=false;
     const lat=Number(pos.coords.latitude),lng=Number(pos.coords.longitude);
-    if(!Number.isFinite(lat)||!Number.isFinite(lng)){message('El dispositivo no devolvió coordenadas válidas.',true);return;}
+    if(!validCoordinate(lat,lng)){errorInfo('La ubicación no está dentro del área cubierta. Elige un punto inicial en el mapa.');return;}
     currentLocation={lat,lng};
     if(userMarker)map.removeLayer(userMarker);
     if(accuracyCircle)map.removeLayer(accuracyCircle);
@@ -181,16 +312,17 @@ $('locateButton').addEventListener('click',()=>{
       title:'Mi ubicación GPS',zIndexOffset:1200
     }).addTo(map);
     if(Number.isFinite(accuracy)&&accuracy>0){accuracyCircle=L.circle([lat,lng],{radius:accuracy,color:'#3289bb',fillColor:'#57b7eb',fillOpacity:.12,weight:1}).addTo(map);}
-    map.setView([lat,lng],Math.max(map.getZoom(),16),{animate:true});
-    message(Number.isFinite(accuracy)&&accuracy>0?
-      `Ubicación detectada (precisión estimada: ±${Math.round(accuracy)} m).`:'Ubicación detectada.');
-  },error=>{
+    if(asRouteOrigin){setOrigin(lat,lng,'gps',`mi ubicación (±${Math.round(accuracy||0)} m)`);}
+    else {map.setView([lat,lng],Math.max(map.getZoom(),16),{animate:true});message(Number.isFinite(accuracy)&&accuracy>0?
+      `Ubicación detectada (precisión estimada: ±${Math.round(accuracy)} m).`:'Ubicación detectada.');}
+  },err=>{
     btn.disabled=false;
-    const txt=error.code===1?'Permiso de ubicación denegado. Puedes buscar una dirección manualmente.':
-      error.code===3?'No se obtuvo el GPS a tiempo. Inténtalo de nuevo.':'No se pudo obtener tu ubicación.';
-    message(txt,true);
+    const txt=err.code===1?'Permiso de ubicación denegado. Marca el inicio en el mapa o escribe una dirección.':
+      err.code===3?'No se obtuvo el GPS a tiempo. Inténtalo de nuevo.':'No se pudo obtener tu ubicación.';
+    errorInfo(txt);
   },{enableHighAccuracy:true,timeout:18000,maximumAge:12000});
-});
+}
+$('locateButton').addEventListener('click',()=>requestGPS(false));
 async function loadTerritories(){
   try{
     const response=await fetch('/api/data',{cache:'no-store'});

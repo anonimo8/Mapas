@@ -3,12 +3,14 @@ import {readFile} from 'node:fs/promises';
 import admin from '../src/admin/index.js';
 import {TERRITORY_REFERENCE_SEEDS} from '../src/admin/reference-territories.js';
 import {handleAuthRoute,hasAdminSession} from '../src/auth.js';
+import {buildPublicRoute} from '../src/routing.js';
 const workerText=await readFile(new URL('../src/index.js',import.meta.url),'utf8');
 const adapted=workerText.replace("import { DurableObject } from 'cloudflare:workers';",'class DurableObject {}')
   .replace("import adminHandler from './admin/index.js';",'')
   .replace("import {TERRITORY_REFERENCE_SEEDS} from './admin/reference-territories.js';",'const TERRITORY_REFERENCE_SEEDS=globalThis._territoryReferenceSeeds;')
-  .replace("import {handleAuthRoute,hasAdminSession} from './auth.js';",'const adminHandler=globalThis._adminHandler; const handleAuthRoute=globalThis._handleAuthRoute;const hasAdminSession=globalThis._hasAdminSession;');
-globalThis._territoryReferenceSeeds=TERRITORY_REFERENCE_SEEDS;globalThis._adminHandler=admin;globalThis._handleAuthRoute=handleAuthRoute;globalThis._hasAdminSession=hasAdminSession;
+  .replace("import {handleAuthRoute,hasAdminSession} from './auth.js';",'const adminHandler=globalThis._adminHandler; const handleAuthRoute=globalThis._handleAuthRoute;const hasAdminSession=globalThis._hasAdminSession;')
+  .replace("import {buildPublicRoute} from './routing.js';",'const buildPublicRoute=globalThis._buildPublicRoute;');
+globalThis._buildPublicRoute=buildPublicRoute;globalThis._territoryReferenceSeeds=TERRITORY_REFERENCE_SEEDS;globalThis._adminHandler=admin;globalThis._handleAuthRoute=handleAuthRoute;globalThis._hasAdminSession=hasAdminSession;
 const {default:worker}=await import('data:text/javascript;base64,'+Buffer.from(adapted).toString('base64'));
 const prepare=(sql)=>({
   all:async()=>({results:[]}),first:async()=>null,

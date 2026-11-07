@@ -2,6 +2,7 @@ import adminHandler from './admin/index.js';
 import {TERRITORY_REFERENCE_SEEDS} from './admin/reference-territories.js';
 import {handleAuthRoute,hasAdminSession} from './auth.js';
 import { DurableObject } from 'cloudflare:workers';
+import {buildPublicRoute} from './routing.js';
 
 const json = (data, status=200, headers={}) => new Response(JSON.stringify(data), {
   status, headers: { 'content-type':'application/json; charset=utf-8', 'cache-control':'no-store', 'x-content-type-options':'nosniff', ...headers }
@@ -94,6 +95,15 @@ export default {
         if(q.length<4 || q.length>120) return error('La búsqueda debe contener entre 4 y 120 caracteres.');
         const inner = new Request(new URL('/geocode?q='+encodeURIComponent(q), url.origin),{headers:{'referer':url.origin+'/', 'x-app-name':'TerritoriosLambayeque'}});
         return env.LIVE.getByName('mapa-publico').fetch(inner);
+      }
+      if (url.pathname === '/api/route' && method === 'POST') {
+        if(!(request.headers.get('content-type')||'').toLowerCase().includes('application/json'))
+          return error('Se requiere JSON.',415);
+        if(Number(request.headers.get('content-length')||0)>1500) return error('Solicitud demasiado grande.',413);
+        try{
+          const body=await request.json();
+          return json(await buildPublicRoute(body));
+        }catch(e){return error(e?.message||'No se pudo calcular la ruta.',e?.status||503);}
       }
       if (url.pathname === '/api/proposals' && method === 'POST') {
         if (!env.TURNSTILE_SECRET || !env.TURNSTILE_SITE_KEY) return error('Aportes no habilitados: falta configurar Turnstile.',503);

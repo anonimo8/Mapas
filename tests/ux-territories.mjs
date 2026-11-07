@@ -12,11 +12,11 @@ assert.ok(pub.includes('fillOpacity:.13'),'La vista pública debe sombrear suave
 assert.ok(pub.includes('polygon.bindTooltip(badge'),'Cada polígono debe mostrar su número');
 assert.ok(pub.includes('territory-stats-icon'),'Cada territorio debe incluir etiqueta pequeña H/M');
 assert.ok(!pub.includes('/editar?territorio='),'La vista pública no debe mostrar herramientas de edición');
-assert.ok(!pub.includes('circleMarker'),'La vista pública no debe mostrar puntos individuales');
+assert.ok(!pub.includes('private_person_points')&&!pub.includes('/api/admin/private/points'),'La vista pública no debe cargar puntos individuales; solo inicio y destino de navegación');
 assert.ok(pub.includes('/api/public-territory-stats'),'La vista pública debe consultar solo recuentos agregados y protegidos');
 assert.ok(pub.includes('/api/geocode?q='),'Debe usar el buscador de direcciones del backend');
 assert.ok(pub.includes('getCurrentPosition'),'El GPS necesita solicitud explícita');
-assert.ok(pub.includes('https://www.google.com/maps/dir/'),'La navegación debe abrir indicaciones del mapa');
+assert.ok(pub.includes('routePolyline6')&&pub.includes("fetch('/api/route'"),'La navegación debe dibujarse dentro del mapa');
 assert.ok(pub.includes('territorySource'),'El mapa público debe diferenciar contornos definitivos y referenciales');
 const publicHTML=await readFile(new URL('../public/index.html',import.meta.url),'utf8');
 assert.ok(!publicHTML.includes('id="deafCount"'),'El cuadro público del contador general debe desaparecer');

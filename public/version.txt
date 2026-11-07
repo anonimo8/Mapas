@@ -1,2 +1,1 @@
-MAPA_PUBLICO_V3_2026-11-06_R2
-Buscador de territorios y direcciones, GPS, rutas, H/M por territorio. Sin contador general.
+MAPA_PUBLICO_V4_2026-11-06_R3
