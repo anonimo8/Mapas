@@ -1,0 +1,17 @@
+import {readFileSync} from 'node:fs';
+import {strict as assert} from 'node:assert';
+const css=readFileSync(new URL('../public/style.css',import.meta.url),'utf8');
+const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+const version=readFileSync(new URL('../public/version.txt',import.meta.url),'utf8');
+assert.match(css,/R8 — Diseño de cristal consistente en escritorio/);
+assert.match(css,/@media \(min-width:601px\)/);
+assert.match(css,/background:rgba\(255,255,255,\.10\)/);
+assert.match(css,/background:rgba\(255,255,255,\.08\)/);
+assert.match(css,/\.public-map \.map-search\{/);
+assert.match(css,/\.public-map \.route-panel\{/);
+assert.match(css,/\.public-map \.route-expand/);
+assert.match(css,/@media \(prefers-reduced-transparency:reduce\)/);
+assert.match(html,/MAPA_PUBLICO_V8_2026-11-07_R8_GLASS_ALL_SCREENS/);
+assert.match(html,/v=20261107r8/);
+assert.match(version,/MAPA_PUBLICO_R8_2026-11-07_GLASS_DESKTOP_CONTROLS/);
+console.log('PASS: R8 cristal en PC, controles internos visibles y R7 móvil conservada.');

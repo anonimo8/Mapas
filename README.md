@@ -107,3 +107,7 @@ La tarjeta de destino móvil se muestra en una sola fila semitransparente y el a
 
 ## R7 — Fondo casi invisible en celulares
 La búsqueda y el destino flotan sobre el mapa con fondos muy transparentes; los controles se mantienen legibles. Detalles en `CAMBIO_UX_DESTINO_TRANSPARENTE_R7.md`.
+
+
+## R8 — Cristal en escritorio y controles internos
+La tarjeta de destino y buscador comparten el acabado transparente en PC y móvil. Los controles son más opacos para poder distinguirlos. Ver `CAMBIO_UX_GLASS_PC_CONTROLES_R8.md`.

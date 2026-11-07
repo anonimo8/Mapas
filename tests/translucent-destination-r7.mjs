@@ -8,7 +8,7 @@ assert.match(css,/\.search-panel:has\(\.destination-panel:not\(\[hidden\]\)\)\s*
 assert.match(css,/\.destination-panel,\s*\.search-panel\.is-routing \.destination-panel\s*\{[\s\S]*?background:rgba\(255,255,255,\.08\)/);
 assert.match(css,/\.map-search\s*\{\s*background:rgba\(255,255,255,\.77\)/s);
 assert.match(css,/\.destination-panel \.route-button\s*\{\s*background:rgba\(27,86,59,\.96\)/s);
-assert.match(html,/MAPA_PUBLICO_V7_2026-11-07_R7_GLASS/);
-assert.match(html,/v=20261107r7/);
-assert.match(version,/MAPA_PUBLICO_R7_2026-11-07_GLASS_MOBILE/);
+assert.match(html,/MAPA_PUBLICO_V[78]_2026-11-07_R[78]_GLASS/);
+assert.match(html,/v=20261107r[78]/);
+assert.match(version,/MAPA_PUBLICO_R[78]_2026-11-07_GLASS_(MOBILE|DESKTOP_CONTROLS)/);
 console.log('PASS: R7 cristal móvil transparente; búsqueda legible y botón de ruta contrastado.');
