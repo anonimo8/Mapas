@@ -1,3 +1,7 @@
+## Actualización R5 — resumen de rutas compacto (6 de noviembre de 2026)
+
+En celulares, al calcular la ruta aparece una barra inferior de aproximadamente **60 px**, con distancia, tiempo, **Detalles** y **×**. El texto de estado extenso ya no cubre la pantalla; los pasos y las opciones avanzadas se despliegan solo a petición. La ruta sigue dibujándose en el mapa, y continúa funcionando el ingreso manual de partida si falla GPS. Ver `CAMBIO_UX_RUTA_COMPACTA_R5.md`.
+
 # Territorios Lambayeque · V3 — una sola aplicación
 
 **Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa público se consulta sin iniciar sesión y ofrece divisiones numeradas, búsqueda por número o dirección, ubicación por GPS y rutas dibujadas directamente dentro del mapa. No muestra el contador general grande. El editor protegido se abre escribiendo `/editar` en la misma dirección web.

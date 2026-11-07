@@ -80,9 +80,22 @@ function stopRouteRequest(){
   if(routeAbort){routeAbort.abort();routeAbort=null;}
   $('routeButton').disabled=false;
 }
+function setRouteExpanded(expanded){
+  $('routePanel').classList.toggle('is-expanded',expanded);
+  $('routeMore').hidden=!expanded;
+  $('toggleRouteDetails').setAttribute('aria-expanded',String(expanded));
+  $('toggleRouteDetails').textContent=expanded?'Ocultar':'Detalles';
+  document.querySelector('.public-map').classList.toggle('route-expanded',expanded);
+}
+function setRouteReady(ready){
+  $('routePanel').classList.toggle('is-ready',ready);
+  document.querySelector('.public-map').classList.toggle('route-visible',ready);
+  if(!ready)setRouteExpanded(false);
+}
 function clearRouteDrawing(){
   stopRouteRequest();routeLayers.clearLayers();
   $('routeDetails').hidden=true;
+  setRouteReady(false);
   $('routeSteps').replaceChildren();
 }
 function routeStatus(text,isError=false){
@@ -160,7 +173,7 @@ async function calculateRoute(){
       .bindTooltip(destination.title).addTo(routeLayers);
     const mobile=window.matchMedia('(max-width:600px)').matches;
     map.fitBounds(line.getBounds(),{paddingTopLeft:mobile?[20,165]:[30,150],
-      paddingBottomRight:mobile?[20,Math.min(340,Math.max(200,Math.round(window.innerHeight*.41)))]:[30,180],maxZoom:17});
+      paddingBottomRight:mobile?[20,112]:[30,180],maxZoom:17});
     $('routeDistance').textContent=niceKm(data.distanceKm);
     $('routeDuration').textContent=`≈ ${niceTime(data.durationSeconds)} · ${mode==='walking'?'A pie':'En auto'}`;
     const steps=$('routeSteps');steps.replaceChildren();
@@ -172,6 +185,9 @@ async function calculateRoute(){
     }
     $('routeOriginFallback').hidden=true;
     $('routeDetails').hidden=false;
+    $('routeApproxNote').hidden=!destination.isApproximate;
+    setRouteExpanded(false);
+    setRouteReady(true);
     routeStatus(destination.isApproximate?
       'Ruta lista. El destino señala un punto aproximado del territorio.':'Ruta lista desde tu punto de partida hasta el destino.');
   }catch(err){
@@ -194,6 +210,10 @@ $('routeButton').addEventListener('click',()=>{
   requestGPS(true);
 });
 $('closeRoute').addEventListener('click',closeRoutePlanner);
+$('closeRouteCompact').addEventListener('click',closeRoutePlanner);
+$('toggleRouteDetails').addEventListener('click',()=>{
+  setRouteExpanded(!$('routePanel').classList.contains('is-expanded'));
+});
 $('retryRoute').addEventListener('click',()=>{if(routeOrigin&&destination)void calculateRoute();});
 $('clearRoute').addEventListener('click',()=>{
   clearRouteDrawing();

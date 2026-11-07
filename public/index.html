@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f6f7f2">
-  <meta name="mapa-build" content="MAPA_PUBLICO_V4_2026-11-06_R4_UX">
+  <meta name="mapa-build" content="MAPA_PUBLICO_V5_2026-11-06_R5_COMPACT">
   <meta name="description" content="Busca territorios por número o dirección y consulta tu ubicación en el mapa de Lambayeque.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Mapa público de territorios | Lambayeque</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/style.css?v=20261106r4">
+  <link rel="stylesheet" href="/style.css?v=20261106r5">
 </head>
 <body>
   <main class="public-map" aria-label="Mapa público de territorios de Lambayeque">
@@ -76,8 +76,15 @@
         </div>
       </div>
       <div id="routeDetails" class="route-details" hidden>
-        <div class="route-summary"><strong id="routeDistance"></strong><span id="routeDuration"></span></div>
-        <details id="routeStepsDisclosure" class="route-disclosure">
+        <div class="route-bar">
+          <span class="route-bar-icon" aria-hidden="true">↗</span>
+          <div class="route-summary"><strong id="routeDistance"></strong><span id="routeDuration"></span></div>
+          <button id="toggleRouteDetails" class="route-expand" type="button" aria-expanded="false" aria-controls="routeMore">Detalles</button>
+          <button id="closeRouteCompact" class="route-close-compact" type="button" aria-label="Cerrar resumen de ruta" title="Cerrar">×</button>
+        </div>
+        <div id="routeMore" class="route-more" hidden>
+          <p id="routeApproxNote" class="route-approx-note" hidden>El destino es un punto aproximado del territorio.</p>
+          <details id="routeStepsDisclosure" class="route-disclosure">
           <summary>Ver indicaciones paso a paso</summary>
           <ol id="routeSteps" class="route-steps"></ol>
         </details>
@@ -89,7 +96,8 @@
           <button id="clearRoute" type="button" class="route-clear">Quitar recorrido del mapa</button>
           <p class="route-advice">Ruta orientativa sobre OpenStreetMap; comprueba los accesos. En los territorios el destino es un punto aproximado del área, no una puerta exacta.</p>
           <small class="route-provider">Rutas: Valhalla / OpenStreetMap</small>
-        </details>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -101,6 +109,6 @@
   </main>
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script defer src="/territory-colors.js"></script>
-  <script defer src="/app.js?v=20261106r4"></script>
+  <script defer src="/app.js?v=20261106r5"></script>
 </body>
 </html>
