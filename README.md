@@ -1,15 +1,25 @@
 # Territorios Lambayeque · V3 — una sola aplicación
 
-**Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa público se consulta sin iniciar sesión y ofrece divisiones numeradas, búsqueda por número o dirección, ubicación por GPS e indicaciones externas de ruta. No muestra el contador general grande. El editor protegido se abre escribiendo `/editar` en la misma dirección web.
+**Un repositorio de GitHub, un único Worker `mapas`, una sola dirección web**. El mapa público se consulta sin iniciar sesión y ofrece divisiones numeradas, búsqueda por número o dirección, ubicación por GPS y rutas dibujadas directamente dentro del mapa. No muestra el contador general grande. El editor protegido se abre escribiendo `/editar` en la misma dirección web.
+
+## Mejora R4 — «Cómo llegar» en celular (6 de noviembre de 2026)
+
+El botón **Cómo llegar** solo aparece **debajo del buscador**, dentro de la ficha del territorio o dirección elegida. Al tocarlo se pide permiso GPS y, si se concede y la posición está en el área admitida, se calcula y se dibuja **automáticamente** el itinerario a pie desde la posición detectada hasta ese destino. No se abre otro sitio ni hay que seleccionar manualmente el origen.
+
+Si el GPS está apagado, bloqueado, fuera del área o no funciona en ese dispositivo, aparece un único campo para ingresar un lugar de partida; se buscan coincidencias de direcciones y, al elegir una, se calcula la ruta. También se puede reintentar GPS o marcar un inicio en el mapa. Los pasos y las opciones de auto/a pie quedan plegados hasta que el usuario los solicita. El panel de indicaciones se muestra como una tarjeta inferior en pantallas móviles.
+
+El navegador solicita geolocalización únicamente cuando se pulsa **Cómo llegar** o **Mi ubicación**. Para calcular el recorrido, las coordenadas del inicio y destino se envían al endpoint del propio Worker `/api/route`, que consulta el servicio Valhalla/OpenStreetMap; no se guardan en las tablas D1. El servicio externo recibe las coordenadas para realizar el cálculo y su disponibilidad depende de la red. El destino del territorio es un **punto aproximado** del polígono, no una dirección de puerta verificada. Requiere HTTPS para utilizar GPS.
+
+Ver [CAMBIO_UX_COMO_LLEGAR_MOVIL_R4.md](CAMBIO_UX_COMO_LLEGAR_MOVIL_R4.md) para una guía corta de verificación.
 
 ## Mapa público: búsqueda, GPS, rutas y etiquetas H/M (6 de noviembre de 2026)
 
 - **Buscador combinado:** el usuario elige **Territorio** (número) o **Dirección** (calle/número/distrito). Las direcciones se consultan mediante el servicio Nominatim que ya tenía el Worker (con cuota y caché); el resultado depende de la cobertura cartográfica disponible.
-- **Mi ubicación:** botón GPS con permiso explícito del navegador; requiere conexión segura HTTPS. Señala posición y radio de precisión estimada del dispositivo. No se guarda en D1 ni se envía al Worker.
-- **Cómo llegar:** al seleccionar una dirección o territorio, se abre Google Maps con una ruta a pie. Si el usuario autorizó GPS, se pasa como origen **solo cuando pulsa Cómo llegar**. Si no lo autorizó, Google Maps puede pedir la ubicación. Para territorios, el destino es el centro geométrico aproximado del contorno, no una puerta o dirección exacta.
+- **Mi ubicación:** botón GPS con permiso explícito del navegador; requiere conexión segura HTTPS. Señala posición y radio de precisión estimada del dispositivo. La visualización del punto GPS no lo guarda en D1; al solicitar una ruta, las coordenadas del origen sí se envían al Worker para calcularla.
+- **Cómo llegar:** solo aparece al seleccionar destino; abre las indicaciones dentro del mapa. Pide GPS al pulsarlo y calcula la ruta automáticamente. Si el dispositivo no permite GPS, solicita un punto de partida escrito. El destino de un territorio es un punto aproximado de su contorno, no una puerta verificada.
 - **Sin cuadro de total público:** eliminado completamente de la página y retirado el endpoint antiguo `/api/public-summary`. El resumen global exacto H/M se conserva en la sección privada del editor, pequeño y visible solo con sesión autenticada.
 - **Etiquetas en esquina de cada territorio:** muestran `H` y `M` en tamaño discreto, únicamente para territorios publicados. La nueva ruta pública `/api/public-territory-stats` entrega agregados por sexo sin puntos, notas, coordenadas ni fichas. Por privacidad, las celdas de 1 a 4 personas se muestran como `—`; cero o cinco y más pueden mostrarse como cantidad. **Los valores exactos, incluso los pequeños, permanecen en `/editar`.** Las divisiones sin publicar tampoco exponen sus estadísticas.
-- Sin nuevas tablas, migraciones, librerías o servicios de pago. Actualizar los archivos en GitHub y desplegar el Worker existente. Las rutas externas y el GPS requieren navegador/red compatibles.
+- Sin nuevas tablas, migraciones, librerías o servicios de pago. Actualizar los archivos en GitHub y desplegar el Worker existente. El cálculo de rutas en la propia página y el GPS requieren navegador/red compatibles.
 
 ## Corrección: puntos visibles y divisiones en vista pública (5 de noviembre de 2026)
 

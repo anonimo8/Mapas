@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f6f7f2">
-  <meta name="mapa-build" content="MAPA_PUBLICO_V4_2026-11-06_R3">
+  <meta name="mapa-build" content="MAPA_PUBLICO_V4_2026-11-06_R4_UX">
   <meta name="description" content="Busca territorios por número o dirección y consulta tu ubicación en el mapa de Lambayeque.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Mapa público de territorios | Lambayeque</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/style.css?v=20261106r3">
+  <link rel="stylesheet" href="/style.css?v=20261106r4">
 </head>
 <body>
   <main class="public-map" aria-label="Mapa público de territorios de Lambayeque">
@@ -32,6 +32,20 @@
       </form>
       <p id="searchStatus" class="search-status" role="status" aria-live="polite" hidden></p>
       <div id="searchResults" class="search-results" aria-label="Resultados de la búsqueda" hidden></div>
+      <section id="destinationPanel" class="destination-panel" aria-label="Destino seleccionado" hidden>
+        <div class="destination-topline">
+          <div class="destination-body">
+            <span class="destination-kicker">DESTINO ENCONTRADO</span>
+            <strong id="destinationTitle"></strong>
+            <small id="destinationHint"></small>
+          </div>
+          <button id="clearDestination" type="button" class="clear-destination" aria-label="Quitar destino" title="Quitar destino">×</button>
+        </div>
+        <button id="routeButton" type="button" class="route-button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 19 5M8 5h11v11"/></svg>
+          Cómo llegar
+        </button>
+      </section>
     </section>
 
     <button id="locateButton" class="locate-button" type="button" title="Buscar mi ubicación por GPS" aria-label="Ver mi ubicación actual">
@@ -39,33 +53,44 @@
       <span>Mi ubicación</span>
     </button>
 
-    <section id="destinationPanel" class="destination-panel" aria-label="Lugar seleccionado" hidden>
-      <div class="destination-body"><span class="destination-kicker">DESTINO SELECCIONADO</span><strong id="destinationTitle"></strong><small id="destinationHint"></small></div>
-      <div class="destination-actions"><button id="routeButton" type="button" class="route-button">Cómo llegar <span aria-hidden="true">⌁</span></button><button id="clearDestination" type="button" class="clear-destination" aria-label="Quitar destino" title="Quitar destino">×</button></div>
-    </section>
-
-    <section id="routePanel" class="route-panel" aria-label="Recorrido dentro del mapa" hidden>
-      <div class="route-head"><div><span class="route-kicker">INDICACIONES EN ESTE MAPA</span><strong>Cómo llegar</strong></div><button id="closeRoute" class="route-close" type="button" aria-label="Cerrar las indicaciones">×</button></div>
-      <label class="route-mode-label" for="routeMode">Tipo de recorrido</label>
-      <select id="routeMode" class="route-mode"><option value="walking">A pie</option><option value="driving">En auto</option></select>
-      <div class="route-origins">
-        <button id="routeGPS" type="button" class="route-origin-btn">⌖ Desde mi ubicación</button>
-        <button id="routePick" type="button" class="route-origin-btn route-origin-secondary">◎ Elegir inicio en mapa</button>
+    <section id="routePanel" class="route-panel" aria-label="Indicaciones de ruta" hidden>
+      <div class="route-head">
+        <div><span class="route-kicker">RUTA EN EL MAPA</span><strong>Cómo llegar</strong></div>
+        <button id="closeRoute" class="route-close" type="button" aria-label="Cerrar indicaciones">×</button>
       </div>
-      <form id="routeOriginForm" class="route-origin-form" autocomplete="off">
-        <label for="routeOriginInput">O escribir una dirección de partida</label>
-        <div class="route-origin-search"><input id="routeOriginInput" type="search" minlength="4" maxlength="120" placeholder="Calle, número, Lambayeque" aria-label="Dirección de partida"><button type="submit" aria-label="Buscar dirección de inicio">Buscar</button></div>
-      </form>
-      <div id="routeOriginResults" class="route-origin-results" hidden></div>
-      <p id="routeStatus" class="route-status" role="status" aria-live="polite">Elige desde dónde iniciarás el recorrido.</p>
+      <p id="routeStatus" class="route-status" role="status" aria-live="polite">Detectando tu ubicación…</p>
+      <button id="retryRoute" class="route-retry" type="button" hidden>Reintentar recorrido</button>
+      <div id="routeOriginFallback" class="route-origin-fallback" hidden>
+        <p class="origin-explain">¿Desde dónde sales? Escribe tu dirección o un lugar cercano.</p>
+        <form id="routeOriginForm" class="route-origin-form" autocomplete="off">
+          <label class="visually-hidden" for="routeOriginInput">Lugar de partida</label>
+          <div class="route-origin-search">
+            <input id="routeOriginInput" type="search" minlength="4" maxlength="120" placeholder="Tu dirección o lugar de partida" aria-label="Lugar de partida">
+            <button type="submit">Buscar</button>
+          </div>
+        </form>
+        <div id="routeOriginResults" class="route-origin-results" aria-label="Elige tu punto de partida" hidden></div>
+        <div class="route-alternatives">
+          <button id="routeGPS" type="button" class="route-origin-btn">⌖ Reintentar GPS</button>
+          <button id="routePick" type="button" class="route-origin-btn route-origin-secondary">◎ Elegir en el mapa</button>
+        </div>
+      </div>
       <div id="routeDetails" class="route-details" hidden>
         <div class="route-summary"><strong id="routeDistance"></strong><span id="routeDuration"></span></div>
-        <p class="route-advice">Ruta orientativa según las calles y caminos disponibles en OpenStreetMap. Verifica accesos y seguridad.</p>
-        <div class="route-steps-title">Indicaciones paso a paso</div>
-        <ol id="routeSteps" class="route-steps"></ol>
-        <button id="clearRoute" type="button" class="route-clear">Quitar recorrido del mapa</button>
+        <details id="routeStepsDisclosure" class="route-disclosure">
+          <summary>Ver indicaciones paso a paso</summary>
+          <ol id="routeSteps" class="route-steps"></ol>
+        </details>
+        <details id="routeOptions" class="route-disclosure route-options">
+          <summary>Opciones de recorrido</summary>
+          <label class="route-mode-label" for="routeMode">Tipo de recorrido</label>
+          <select id="routeMode" class="route-mode"><option value="walking">A pie</option><option value="driving">En auto</option></select>
+          <button id="changeOrigin" type="button" class="route-change-origin">Cambiar lugar de partida</button>
+          <button id="clearRoute" type="button" class="route-clear">Quitar recorrido del mapa</button>
+          <p class="route-advice">Ruta orientativa sobre OpenStreetMap; comprueba los accesos. En los territorios el destino es un punto aproximado del área, no una puerta exacta.</p>
+          <small class="route-provider">Rutas: Valhalla / OpenStreetMap</small>
+        </details>
       </div>
-      <small class="route-provider">Rutas: Valhalla / OpenStreetMap · Se consultan al solicitarlas</small>
     </section>
 
     <a class="admin-entry" href="/editar" title="Entrar a administración (acceso protegido)" aria-label="Administración de territorios">
@@ -76,6 +101,6 @@
   </main>
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script defer src="/territory-colors.js"></script>
-  <script defer src="/app.js?v=20261106r3"></script>
+  <script defer src="/app.js?v=20261106r4"></script>
 </body>
 </html>
