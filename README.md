@@ -103,3 +103,7 @@ Con Node.js: `npm install`, `npm run check`, `npm test`. Se verificó localmente
 
 ## R6 — Destino compacto / contraseña visible
 La tarjeta de destino móvil se muestra en una sola fila semitransparente y el acceso de administración incorpora ojo para mostrar u ocultar contraseña. Ver `CAMBIO_UX_DESTINO_COMPACTO_Y_OJO_R6.md`.
+
+
+## R7 — Fondo casi invisible en celulares
+La búsqueda y el destino flotan sobre el mapa con fondos muy transparentes; los controles se mantienen legibles. Detalles en `CAMBIO_UX_DESTINO_TRANSPARENTE_R7.md`.

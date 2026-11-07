@@ -156,3 +156,58 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
   .destination-panel .route-button{padding:0 6px;font-size:9.5px}
   .clear-destination{width:25px;min-width:25px}
 }
+
+/* R7 — Cristal casi invisible en el selector de territorio (vista móvil).
+   El mapa se mantiene visible a través del contenedor y de la tarjeta.
+   Los campos interactivos conservan contraste para poder utilizarlos. */
+@media (max-width:600px){
+  .search-panel,
+  .search-panel:has(.destination-panel:not([hidden])){
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:none;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    padding:8px;
+    border-radius:13px;
+  }
+  .search-head{margin:0 0 7px 2px}
+  .search-head b{color:#214733;text-shadow:0 1px 2px rgba(255,255,255,.98),0 0 6px rgba(255,255,255,.82)}
+  .search-head small{color:#436855;text-shadow:0 1px 2px rgba(255,255,255,.95)}
+  .search-emblem{background:rgba(255,255,255,.65);color:#235d42}
+  .map-search{
+    background:rgba(255,255,255,.77);
+    border-color:rgba(255,255,255,.74);
+    box-shadow:0 2px 7px rgba(25,49,36,.08);
+    backdrop-filter:blur(3px);
+    -webkit-backdrop-filter:blur(3px);
+  }
+  .map-search select{background:rgba(248,252,247,.48)}
+  .destination-panel,
+  .search-panel.is-routing .destination-panel{
+    margin-top:6px;
+    padding:3px 4px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.30);
+    box-shadow:none;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    border-radius:9px;
+  }
+  .destination-mobile-name{
+    color:#163d2a;
+    text-shadow:0 1px 2px rgba(255,255,255,.96),0 0 6px rgba(255,255,255,.86);
+  }
+  .destination-panel .route-button{
+    background:rgba(27,86,59,.96);
+    box-shadow:0 2px 8px rgba(16,64,40,.12);
+  }
+  .destination-panel .route-button:hover{background:#174b33}
+  .clear-destination{
+    background:rgba(255,255,255,.56);
+    color:#315d44;
+  }
+  .clear-destination:hover{background:rgba(255,255,255,.82)}
+  .search-results{background:rgba(255,255,255,.87)}
+  .search-status{background:rgba(255,255,255,.73);border-radius:6px;padding:4px 6px}
+}

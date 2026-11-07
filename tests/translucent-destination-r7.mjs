@@ -1,0 +1,14 @@
+import {readFileSync} from 'node:fs';
+import {strict as assert} from 'node:assert';
+const css=readFileSync(new URL('../public/style.css',import.meta.url),'utf8');
+const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+const version=readFileSync(new URL('../public/version.txt',import.meta.url),'utf8');
+assert.match(css,/R7 — Cristal casi invisible/);
+assert.match(css,/\.search-panel:has\(\.destination-panel:not\(\[hidden\]\)\)\s*\{\s*background:rgba\(255,255,255,\.10\)/s);
+assert.match(css,/\.destination-panel,\s*\.search-panel\.is-routing \.destination-panel\s*\{[\s\S]*?background:rgba\(255,255,255,\.08\)/);
+assert.match(css,/\.map-search\s*\{\s*background:rgba\(255,255,255,\.77\)/s);
+assert.match(css,/\.destination-panel \.route-button\s*\{\s*background:rgba\(27,86,59,\.96\)/s);
+assert.match(html,/MAPA_PUBLICO_V7_2026-11-07_R7_GLASS/);
+assert.match(html,/v=20261107r7/);
+assert.match(version,/MAPA_PUBLICO_R7_2026-11-07_GLASS_MOBILE/);
+console.log('PASS: R7 cristal móvil transparente; búsqueda legible y botón de ruta contrastado.');
