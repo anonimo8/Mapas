@@ -3,6 +3,7 @@ import {TERRITORY_REFERENCE_SEEDS} from './admin/reference-territories.js';
 import {handleAuthRoute,hasAdminSession} from './auth.js';
 import { DurableObject } from 'cloudflare:workers';
 import {buildPublicRoute} from './routing.js';
+import {territoryPointCounts} from './territory-stats.js';
 
 const json = (data, status=200, headers={}) => new Response(JSON.stringify(data), {
   status, headers: { 'content-type':'application/json; charset=utf-8', 'cache-control':'no-store', 'x-content-type-options':'nosniff', ...headers }
@@ -58,32 +59,23 @@ export default {
           points:[]
         });
       }
-      // Solo estadísticas agregadas por sexo de territorios PUBLICADOS.
-      // Se ocultan las celdas de 1 a 4 personas; jamás se devuelven coordenadas,
-      // identificadores de individuos, notas ni cifras exactas de celdas pequeñas.
+      // Contamos por posición real dentro del polígono, no por asignación manual.
+      // Solo salen H/M agregados de los territorios PUBLICADOS, nunca coordenadas,
+      // IDs de personas, notas o la lista de puntos privados.
       if (url.pathname === '/api/public-territory-stats' && method === 'GET') {
         if(!env.PRIVATE_DB) return json({status:'unavailable'},503);
         try {
-          const published=await env.PUBLIC_DB.prepare('SELECT id FROM territories WHERE published=1 LIMIT 1000').all();
-          const ids=new Set((published.results||[]).map(t=>String(t.id)));
-          const aggregates=await env.PRIVATE_DB.prepare(
-            'SELECT territory_id,sex,COUNT(*) AS n FROM private_person_points WHERE territory_id IS NOT NULL GROUP BY territory_id,sex'
-          ).all();
-          const perTerritory=new Map();
-          for(const id of ids)perTerritory.set(id,{id,men:0,women:0});
-          for(const row of aggregates.results||[]) {
-            const data=perTerritory.get(String(row.territory_id));
-            if(!data)continue;
-            const n=Number(row.n);
-            if(!Number.isSafeInteger(n)||n<0)continue;
-            if(row.sex==='hombre')data.men=n;
-            if(row.sex==='mujer')data.women=n;
+          const published=await env.PUBLIC_DB.prepare('SELECT id,geometry FROM territories WHERE published=1 LIMIT 1000').all();
+          const points=[];
+          const pageSize=500;
+          for(let offset=0;;offset+=pageSize){
+            const batch=await env.PRIVATE_DB.prepare('SELECT lat,lng,sex FROM private_person_points LIMIT ? OFFSET ?')
+              .bind(pageSize,offset).all();
+            const rows=batch.results||[];
+            points.push(...rows);
+            if(rows.length<pageSize)break;
           }
-          return json({status:'ok',counts:[...perTerritory.values()].map(t=>({
-            id:t.id,
-            men:t.men>0&&t.men<5?null:t.men,
-            women:t.women>0&&t.women<5?null:t.women
-          }))});
+          return json({status:'ok',counts:territoryPointCounts(published.results||[],points)});
         }catch(_){return json({status:'unavailable'},503);}
       }
       if (url.pathname === '/api/live' && method === 'GET') {
