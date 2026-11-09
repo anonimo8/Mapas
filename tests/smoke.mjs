@@ -4,13 +4,15 @@ import admin from '../src/admin/index.js';
 import {TERRITORY_REFERENCE_SEEDS} from '../src/admin/reference-territories.js';
 import {handleAuthRoute,hasAdminSession} from '../src/auth.js';
 import {buildPublicRoute} from '../src/routing.js';
+import {territoryPointCounts} from '../src/territory-stats.js';
 const workerText=await readFile(new URL('../src/index.js',import.meta.url),'utf8');
 const adapted=workerText.replace("import { DurableObject } from 'cloudflare:workers';",'class DurableObject {}')
   .replace("import adminHandler from './admin/index.js';",'')
   .replace("import {TERRITORY_REFERENCE_SEEDS} from './admin/reference-territories.js';",'const TERRITORY_REFERENCE_SEEDS=globalThis._territoryReferenceSeeds;')
   .replace("import {handleAuthRoute,hasAdminSession} from './auth.js';",'const adminHandler=globalThis._adminHandler; const handleAuthRoute=globalThis._handleAuthRoute;const hasAdminSession=globalThis._hasAdminSession;')
-  .replace("import {buildPublicRoute} from './routing.js';",'const buildPublicRoute=globalThis._buildPublicRoute;');
-globalThis._buildPublicRoute=buildPublicRoute;globalThis._territoryReferenceSeeds=TERRITORY_REFERENCE_SEEDS;globalThis._adminHandler=admin;globalThis._handleAuthRoute=handleAuthRoute;globalThis._hasAdminSession=hasAdminSession;
+  .replace("import {buildPublicRoute} from './routing.js';",'const buildPublicRoute=globalThis._buildPublicRoute;')
+  .replace("import {territoryPointCounts} from './territory-stats.js';",'const territoryPointCounts=globalThis._territoryPointCounts;');
+globalThis._territoryPointCounts=territoryPointCounts;globalThis._buildPublicRoute=buildPublicRoute;globalThis._territoryReferenceSeeds=TERRITORY_REFERENCE_SEEDS;globalThis._adminHandler=admin;globalThis._handleAuthRoute=handleAuthRoute;globalThis._hasAdminSession=hasAdminSession;
 const {default:worker}=await import('data:text/javascript;base64,'+Buffer.from(adapted).toString('base64'));
 const prepare=(sql)=>({
   all:async()=>({results:[]}),first:async()=>null,
@@ -31,27 +33,32 @@ assert.ok(publicData.territories.every(t=>!('published' in t)&&!('sex' in t)&&!(
 const reviewEnv={...env,PUBLIC_DB:{prepare:sql=>({all:async()=>({results:sql.includes('FROM territories')?[{id:'1',locality:'Lambayeque',number:1,geometry:JSON.stringify(TERRITORY_REFERENCE_SEEDS[0].geometry),published:0}]:[]})})}};
 r=await worker.fetch(req('/api/data'),reviewEnv,{});
 assert.equal((await r.json()).territorySource,'review');
-// Recuento público por territorio: solo publicados, sin datos individuales,
-// con supresión de 1 a 4 hombres o mujeres por privacidad.
+// Agregados exactos calculados por puntos dentro de polígonos publicados,
+// incluso si el registro no tiene territorio_id o está mal asignado.
 const territoryPublished='11111111-1111-4111-8111-111111111111';
 const territoryDraft='22222222-2222-4222-8222-222222222222';
+const rectangle={type:'Polygon',coordinates:[[[-79.909,-6.700],[-79.907,-6.700],[-79.907,-6.702],[-79.909,-6.702],[-79.909,-6.700]]]};
+const pointsInside=[
+  ...Array.from({length:4},(_,i)=>({lat:-6.7004-i*.0002,lng:-79.908,sex:'hombre',territory_id:null})),
+  {lat:-6.7011,lng:-79.908,sex:'mujer',territory_id:territoryDraft},
+  {lat:-6.702,lng:-79.9075,sex:'mujer',territory_id:null}, // Borde incluido
+  {lat:-6.711,lng:-79.908,sex:'hombre',territory_id:territoryPublished} // Fuera: no cuenta
+];
 const aggregateEnv={...env,
  PUBLIC_DB:{prepare(sql){
-   assert.match(sql,/SELECT id FROM territories WHERE published=1/);
-   return {all:async()=>({results:[{id:territoryPublished}]})};
+   assert.match(sql,/SELECT id,geometry FROM territories WHERE published=1/);
+   return {all:async()=>({results:[{id:territoryPublished,geometry:JSON.stringify(rectangle)}]})};
  }},
  PRIVATE_DB:{prepare(sql){
-   assert.match(sql,/GROUP BY territory_id,sex/);
-   return {all:async()=>({results:[
-     {territory_id:territoryPublished,sex:'hombre',n:2},
-     {territory_id:territoryPublished,sex:'mujer',n:5},
-     {territory_id:territoryDraft,sex:'hombre',n:99}
-   ]})};
+   assert.match(sql,/SELECT lat,lng,sex FROM private_person_points LIMIT \? OFFSET \?/);
+   return {bind(limit,offset){return {all:async()=>({results:pointsInside.slice(offset,offset+limit)})};}};
  }}
 };
 r=await worker.fetch(req('/api/public-territory-stats'),aggregateEnv,{});
 assert.equal(r.status,200);
-assert.deepEqual(await r.json(),{status:'ok',counts:[{id:territoryPublished,men:null,women:5}]});
+const publicCounts=await r.json();
+assert.deepEqual(publicCounts,{status:'ok',counts:[{id:territoryPublished,men:4,women:2}]});
+assert.ok(!JSON.stringify(publicCounts).includes('lat')&&!JSON.stringify(publicCounts).includes('territory_id'));
 r=await worker.fetch(req('/api/public-territory-stats'),env,{});
 assert.equal(r.status,503);assert.deepEqual(await r.json(),{status:'unavailable'});
 r=await worker.fetch(req('/api/public-summary'),aggregateEnv,{});
