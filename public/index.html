@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f6f7f2">
-  <meta name="mapa-build" content="MAPA_PUBLICO_V8_2026-11-07_R8_GLASS_ALL_SCREENS">
+  <meta name="mapa-build" content="MAPA_PUBLICO_V7_2026-11-09_R7_CONTEO_POR_POLIGONO">
   <meta name="description" content="Busca territorios por número o dirección y consulta tu ubicación en el mapa de Lambayeque.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Mapa público de territorios | Lambayeque</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/style.css?v=20261107r8">
+  <link rel="stylesheet" href="/style.css?v=20261109r7">
 </head>
 <body>
   <main class="public-map" aria-label="Mapa público de territorios de Lambayeque">
@@ -46,6 +46,15 @@
           </button>
           <button id="clearDestination" type="button" class="clear-destination" aria-label="Quitar destino" title="Quitar destino">×</button>
         </div>
+        <details id="destinationDetails" class="destination-counts-details" hidden>
+          <summary>Detalles del territorio</summary>
+          <div class="destination-counts-grid" aria-live="polite">
+            <span>Hombres <strong id="destinationMen">—</strong></span>
+            <span>Mujeres <strong id="destinationWomen">—</strong></span>
+            <span>Total <strong id="destinationTotal">—</strong></span>
+          </div>
+          <p>Se incluyen los puntos registrados dentro del perímetro, aunque no tengan territorio asignado.</p>
+        </details>
       </section>
     </section>
 
@@ -106,10 +115,10 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Administración</span>
     </a>
     <div id="mapNotice" class="map-notice" role="status" aria-live="polite" hidden></div>
-    <p class="privacy-footnote" title="Los recuentos menores de cinco personas se ocultan por privacidad">H/M por territorio · —: dato reservado</p>
+    <p class="privacy-footnote" title="Conteos por ubicación real dentro del perímetro">H/M por territorio · —: datos no disponibles</p>
   </main>
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script defer src="/territory-colors.js"></script>
-  <script defer src="/app.js?v=20261107r8"></script>
+  <script defer src="/app.js?v=20261109r7"></script>
 </body>
 </html>

@@ -35,7 +35,19 @@ function normalizedStats(t){
   return counts.get(String(t.id))||{men:null,women:null};
 }
 function displayCount(value){return Number.isSafeInteger(value)&&value>=0?numberFormat.format(value):'—';}
-function statsText(t){const s=normalizedStats(t);return `H ${displayCount(s.men)} · M ${displayCount(s.women)}`;}
+function statsText(t){const s=normalizedStats(t);const total=Number.isSafeInteger(s.men)&&Number.isSafeInteger(s.women)?s.men+s.women:null;
+  return `H ${displayCount(s.men)} · M ${displayCount(s.women)} · Total ${displayCount(total)}`;
+}
+function updateSelectedStats(){
+  if(!destination?.territoryId)return;
+  const selected=territories.find(t=>String(t.id)===destination.territoryId);
+  if(!selected)return;
+  const s=normalizedStats(selected);
+  $('destinationHint').textContent=`${statsText(selected)} · Ruta aproximada al centro del territorio`;
+  $('destinationMen').textContent=displayCount(s.men);
+  $('destinationWomen').textContent=displayCount(s.women);
+  $('destinationTotal').textContent=displayCount(Number.isSafeInteger(s.men)&&Number.isSafeInteger(s.women)?s.men+s.women:null);
+}
 function render(){
   const visible=territories.filter(validTerritory);
   const signature=JSON.stringify([territorySource,visible.map(t=>[t.id,t.number,t.geometry,normalizedStats(t)])]);
@@ -63,11 +75,12 @@ function render(){
       const badgeLng=ne.lng-(ne.lng-sw.lng)*.09;
       const safe=normalizedStats(t);
       const icon=L.divIcon({className:'territory-stats-icon',iconSize:[80,21],iconAnchor:[80,0],
-        html:`<span class="territory-stats" style="--territory-color:${color}" title="Hombres y mujeres. Los recuentos de 1 a 4 se ocultan por privacidad"><span><b>H</b> ${displayCount(safe.men)}</span><span><b>M</b> ${displayCount(safe.women)}</span></span>`});
+        html:`<span class="territory-stats" style="--territory-color:${color}" title="Hombres y mujeres dentro del territorio"><span><b>H</b> ${displayCount(safe.men)}</span><span><b>M</b> ${displayCount(safe.women)}</span></span>`});
       L.marker([badgeLat,badgeLng],{icon,interactive:false,keyboard:false}).addTo(shapes);
     }
   }
   sourceNotice();
+  updateSelectedStats();
   if(visible.length&&!initialFit){
     initialFit=true;
     map.fitBounds(shapes.getBounds(),{paddingTopLeft:[25,95],paddingBottomRight:[25,25],maxZoom:15,animate:false});
@@ -259,22 +272,25 @@ $('routeOriginForm').addEventListener('submit',async e=>{
     list.hidden=false;routeStatus('Elige la dirección donde iniciarás el recorrido.');
   }catch(err){if(searchId===originSearchId)routeStatus(err.message||'No se encontró el origen.',true);}
 });
-function showDestination(lat,lng,title,hint,isApproximate=false){
+function showDestination(lat,lng,title,hint,isApproximate=false,territoryId=null){
   if(!validCoordinate(lat,lng)){message('No se pudo determinar un destino válido.',true);return;}
   // Una nueva selección anula la ruta y las solicitudes de GPS anteriores.
   closeRoutePlanner();
   routeOrigin=null;routeOriginSource=null;
-  destination={lat,lng,title,isApproximate};
+  destination={lat,lng,title,isApproximate,territoryId:territoryId==null?null:String(territoryId)};
   $('destinationTitle').textContent=title;
   $('destinationMobileName').textContent=title.startsWith('Territorio #')?title.replace(/^Territorio\s*/, ''):title;
   $('destinationHint').textContent=hint;
+  $('destinationDetails').hidden=!territoryId;
+  $('destinationDetails').open=false;
   $('destinationPanel').hidden=false;
+  updateSelectedStats();
 }
 function selectTerritory(t,polygon){
   const center=polygon.getBounds().getCenter();
   if(!validCoordinate(center.lat,center.lng))return;
   showDestination(center.lat,center.lng,`Territorio #${t.number} · ${t.locality||'Lambayeque'}`,
-    `${statsText(t)} · Ruta aproximada al centro del territorio`,true);
+    `${statsText(t)} · Ruta aproximada al centro del territorio`,true,t.id);
   message('Territorio seleccionado.');
 }
 function clearDestination(){
@@ -291,7 +307,7 @@ function zoomToTerritory(t){
   if(layer.getBounds().isValid())map.fitBounds(layer.getBounds(),{paddingTopLeft:[40,145],paddingBottomRight:[40,75],maxZoom:17,animate:true});
   const center=layer.getBounds().getCenter();
   showDestination(center.lat,center.lng,`Territorio #${t.number} · ${t.locality||'Lambayeque'}`,
-    `${statsText(t)} · Ruta aproximada al centro del territorio`,true);
+    `${statsText(t)} · Ruta aproximada al centro del territorio`,true,t.id);
 }
 function showResultButtons(results,makeLabel,onSelect){
   const list=$('searchResults');list.replaceChildren();
