@@ -78,8 +78,17 @@ export default {
       }});
       if(url.pathname==='/api/admin/private/points' && method==='GET'){
         if(!env.PRIVATE_DB) return fail('Falta conectar PRIVATE_DB al Worker privado.',503);
-        const result=await env.PRIVATE_DB.prepare('SELECT id,territory_id,lat,lng,sex,note,created_at,updated_at FROM private_person_points ORDER BY created_at ASC LIMIT 2000').all();
-        return send({points:result.results||[]});
+        // Descargar páginas sucesivas para no omitir registros en los detalles del editor.
+        const points=[];
+        const pageSize=500;
+        for(let offset=0;;offset+=pageSize){
+          const result=await env.PRIVATE_DB.prepare('SELECT id,territory_id,lat,lng,sex,note,created_at,updated_at FROM private_person_points ORDER BY created_at ASC,id ASC LIMIT ? OFFSET ?')
+            .bind(pageSize,offset).all();
+          const rows=result.results||[];
+          points.push(...rows);
+          if(rows.length<pageSize)break;
+        }
+        return send({points});
       }
       if(url.pathname==='/api/admin/private/points' && method==='POST'){
         if(!env.PRIVATE_DB) return fail('Falta conectar PRIVATE_DB.',503);
@@ -89,7 +98,8 @@ export default {
         const id=crypto.randomUUID();
         await env.PRIVATE_DB.prepare('INSERT INTO private_person_points(id,territory_id,lat,lng,sex,note) VALUES(?,?,?,?,?,?)')
           .bind(id,point.territoryId,point.lat,point.lng,point.sex,point.note).run();
-        // Deliberadamente NO se emite evento público. Nada confidencial va a PUBLIC_DB.
+        // Aviso genérico sin ningún dato individual; el mapa vuelve a solicitar agregados.
+        await broadcast(env);
         return send({ok:true,id},201);
       }
       let priv=url.pathname.match(/^\/api\/admin\/private\/points\/([^/]+)$/);
@@ -102,11 +112,13 @@ export default {
         if(!existing)return fail('Punto privado no encontrado.',404);
         await env.PRIVATE_DB.prepare('UPDATE private_person_points SET territory_id=?,lat=?,lng=?,sex=?,note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')
           .bind(point.territoryId,point.lat,point.lng,point.sex,point.note,priv[1]).run();
+        await broadcast(env);
         return send({ok:true});
       }
       if(priv && isUUID(priv[1]) && method==='DELETE'){
         if(!env.PRIVATE_DB) return fail('Falta conectar PRIVATE_DB.',503);
         await env.PRIVATE_DB.prepare('DELETE FROM private_person_points WHERE id=?').bind(priv[1]).run();
+        await broadcast(env);
         return send({ok:true});
       }
 

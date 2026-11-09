@@ -80,6 +80,10 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
   </div>
   <p class="small">El PDF toma el <b>encuadre actualmente visible</b> del mapa; haz zoom y mueve la vista para elegir el recorte. Es una ficha privada, con los puntos H/M de ese territorio.</p>
   <div id="territoryStats" class="stat-line">Selecciona un territorio para ver su resumen privado.</div>
+  <details id="territoryPointDetails" class="details-help" hidden>
+    <summary id="territoryPointHeading">Ver puntos contenidos en este territorio</summary>
+    <div id="territoryPointList" class="list" aria-live="polite"></div>
+  </details>
   <div id="status" class="status" aria-live="polite"></div>
   <section class="section" id="territoriesSection"><div class="section-heading"><h3>Territorios guardados <span id="totalTerritories">0</span></h3></div>
     <div class="publish-panel" role="region" aria-label="Estado de publicación">
@@ -92,7 +96,7 @@ input,select,textarea{border-color:#e0e6df;border-radius:12px;background:#fffefa
   <section class="section private-section">
     <div class="privacy-tag">Solo administrador · D1 privada</div>
     <h3>Puntos permanentes: hombres y mujeres</h3>
-    <p class="small">Haz clic en «Añadir punto privado» y después en el mapa. Cada punto se guarda en Cloudflare D1, permanece tras cerrar la sesión y nunca aparece en el mapa público. Máximo seis puntos asignados por territorio.</p>
+    <p class="small">Haz clic en «Añadir punto privado» y después en el mapa. Cada punto se guarda en Cloudflare D1 y nunca aparece individualmente en el mapa público. Los conteos por territorio se calculan con todos los puntos situados dentro del contorno, aunque estén sin asignar. Se mantiene el máximo de seis puntos con asignación manual por territorio.</p>
     <div id="privateSummary" class="stat-line">Cargando puntos privados...</div>
     <button id="newPrivatePoint" class="btn btn-full">＋ Añadir punto privado</button>
     <div id="privateFields" hidden>
@@ -362,7 +366,11 @@ function renderLists(){
   const swatch=document.createElement('span');swatch.className='territory-swatch';swatch.setAttribute('aria-hidden','true');
   const b=document.createElement('button');b.type='button';b.className='list-row';
   const strong=document.createElement('b');strong.textContent=`#${t.number} — ${t.locality}`;
-  const small=document.createElement('small');small.textContent=t.published?'Publicado':'Borrador, no publicado';b.append(strong,small);
+  const small=document.createElement('small');
+  const inside=privateReady?privatePoints.filter(p=>insideGeometry(p,t.geometry)):[];
+  const h=inside.filter(p=>p.sex==='hombre').length,m=inside.filter(p=>p.sex==='mujer').length;
+  small.textContent=`${t.published?'Publicado':'Borrador'} · ${privateReady?`H ${h} · M ${m} · Total ${inside.length}`:'Conteo no disponible'}`;
+  b.append(strong,small);
   b.addEventListener('click',()=>selectTerritory(t.id,true));
   const edit=document.createElement('button');edit.className='list-edit';edit.type='button';edit.textContent='✎ Editar';edit.setAttribute('aria-label',`Editar territorio ${t.number}`);
   edit.addEventListener('click',()=>editIndividualTerritory(t.id));
@@ -539,14 +547,26 @@ async function reloadPrivate(){
   privateReady=false;privatePoints=[];
   $('privateStatus').textContent='No se puede usar el registro privado: '+e.message+' Revisa database/private_schema.sql y el binding PRIVATE_DB.';
  }
- drawPrivateMarkers();renderPrivateList();updateTerritoryStats();
+ drawPrivateMarkers();renderPrivateList();renderLists();updateTerritoryStats();
 }
 function updateTerritoryStats(){
  const t=territories.find(x=>x.id===selectedId);
- if(!t){$('territoryStats').textContent='Selecciona un territorio para ver su resumen privado.';return;}
- const ppl=privatePoints.filter(p=>p.territory_id===t.id);
+ const details=$('territoryPointDetails'),list=$('territoryPointList');
+ list.replaceChildren();
+ if(!t){$('territoryStats').textContent='Selecciona un territorio para ver su resumen privado.';details.hidden=true;return;}
+ if(!privateReady){$('territoryStats').textContent=`Territorio #${t.number} — datos privados no disponibles`;details.hidden=true;return;}
+ const ppl=privatePoints.filter(p=>insideGeometry(p,t.geometry));
  const h=ppl.filter(p=>p.sex==='hombre').length, m=ppl.filter(p=>p.sex==='mujer').length;
- $('territoryStats').textContent=`Territorio #${t.number} — ${h} hombres · ${m} mujeres · ${ppl.length}/6 personas`;
+ $('territoryStats').textContent=`Territorio #${t.number} — H ${h} · M ${m} · Total ${ppl.length} personas dentro del contorno`;
+ details.hidden=false;
+ $('territoryPointHeading').textContent=`Ver detalles de ${ppl.length} ${ppl.length===1?'punto':'puntos'} dentro del territorio`;
+ if(!ppl.length){const empty=document.createElement('p');empty.className='small';empty.textContent='No se encontraron puntos H/M dentro de este contorno.';list.append(empty);}
+ for(const [i,p] of ppl.entries()){
+   const b=document.createElement('button');b.type='button';b.className='list-row';
+   const title=document.createElement('b');title.textContent=`${i+1}. ${p.sex==='hombre'?'H · Hombre':'M · Mujer'}`;
+   const subtitle=document.createElement('small');subtitle.textContent=`${p.note||'Punto privado'}${p.territory_id===t.id?'':' · incluido por ubicación'}`;
+   b.append(title,subtitle);b.addEventListener('click',()=>selectPrivatePoint(p));list.append(b);
+ }
 }
 function renderPrivateList(){
  $('privateList').replaceChildren();
@@ -559,8 +579,8 @@ function renderPrivateList(){
  select.value=(current&&territories.some(t=>t.id===current))?current:(selectedId||'');
  for(const p of privatePoints){
   const b=document.createElement('button');b.className='list-row'+(p.id===privateSelectedId?' active':'');
-  const t=territories.find(t=>t.id===p.territory_id);
-  const a=document.createElement('b');a.textContent=`${p.sex==='hombre'?'H · Hombre':'M · Mujer'} — ${t?'Territorio #'+t.number:'Sin asignar'}`;
+  const matches=territories.filter(t=>insideGeometry(p,t.geometry));
+  const a=document.createElement('b');a.textContent=`${p.sex==='hombre'?'H · Hombre':'M · Mujer'} — ${matches.length?matches.map(t=>'Territorio #'+t.number).join(', '):'Fuera de territorios'}`;
   const z=document.createElement('small');z.textContent=p.note||'Punto privado guardado';
   b.append(a,z);b.addEventListener('click',()=>selectPrivatePoint(p));$('privateList').append(b);
  }
