@@ -165,3 +165,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .destination-counts-grid strong{display:block;font-size:17px;color:#295b42;margin-top:2px}
 .destination-counts-details p{font-size:10px;line-height:1.4;margin:7px 1px 1px}
 @media(max-width:600px){.destination-counts-details{margin-top:3px}.destination-counts-details summary{font-size:10px;padding:2px 3px}}
+
+/* R7.1: el buscador vuelve a flotar sin tarjeta opaca; sólo el formulario conserva su fondo. */
+.search-panel,.search-panel:has(.destination-panel:not([hidden])){
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}

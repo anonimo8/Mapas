@@ -74,8 +74,9 @@ function render(){
       const badgeLat=ne.lat-(ne.lat-sw.lat)*.085;
       const badgeLng=ne.lng-(ne.lng-sw.lng)*.09;
       const safe=normalizedStats(t);
-      const icon=L.divIcon({className:'territory-stats-icon',iconSize:[80,21],iconAnchor:[80,0],
-        html:`<span class="territory-stats" style="--territory-color:${color}" title="Hombres y mujeres dentro del territorio"><span><b>H</b> ${displayCount(safe.men)}</span><span><b>M</b> ${displayCount(safe.women)}</span></span>`});
+      const total=Number.isSafeInteger(safe.men)&&Number.isSafeInteger(safe.women)?safe.men+safe.women:null;
+      const icon=L.divIcon({className:'territory-stats-icon',iconSize:[136,22],iconAnchor:[136,0],
+        html:`<span class="territory-stats" style="--territory-color:${color}" title="Hombres, mujeres y total dentro del territorio"><span><b>H</b> ${displayCount(safe.men)}</span><span><b>M</b> ${displayCount(safe.women)}</span><span><b>Total</b> ${displayCount(total)}</span></span>`});
       L.marker([badgeLat,badgeLng],{icon,interactive:false,keyboard:false}).addTo(shapes);
     }
   }
