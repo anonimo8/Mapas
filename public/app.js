@@ -9,6 +9,15 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
   maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 L.control.zoom({position:'bottomright',zoomInTitle:'Acercar mapa',zoomOutTitle:'Alejar mapa'}).addTo(map);
+// R7.2: mantener legible el recuento H/M/Total al acercar el mapa.
+// Sólo cambia el tamaño de las etiquetas; no altera puntos ni cálculos.
+function resizeTerritoryStats(){
+  const zoom=map.getZoom();
+  const fontSize=Math.max(12,Math.min(18,12+(zoom-14)*1.2));
+  map.getContainer().style.setProperty('--territory-stats-font-size',`${fontSize.toFixed(1)}px`);
+}
+map.on('zoomend',resizeTerritoryStats);
+resizeTerritoryStats();
 const shapes=L.featureGroup().addTo(map);
 const destinationMarkers=L.featureGroup().addTo(map);
 const routeLayers=L.featureGroup().addTo(map);
@@ -75,7 +84,7 @@ function render(){
       const badgeLng=ne.lng-(ne.lng-sw.lng)*.09;
       const safe=normalizedStats(t);
       const total=Number.isSafeInteger(safe.men)&&Number.isSafeInteger(safe.women)?safe.men+safe.women:null;
-      const icon=L.divIcon({className:'territory-stats-icon',iconSize:[136,22],iconAnchor:[136,0],
+      const icon=L.divIcon({className:'territory-stats-icon',iconSize:[220,36],iconAnchor:[220,0],
         html:`<span class="territory-stats" style="--territory-color:${color}" title="Hombres, mujeres y total dentro del territorio"><span><b>H</b> ${displayCount(safe.men)}</span><span><b>M</b> ${displayCount(safe.women)}</span><span><b>Total</b> ${displayCount(total)}</span></span>`});
       L.marker([badgeLat,badgeLng],{icon,interactive:false,keyboard:false}).addTo(shapes);
     }
